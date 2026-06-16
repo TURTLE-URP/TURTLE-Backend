@@ -13,7 +13,7 @@ export class HealthController {
     private health: HealthCheckService,
     private http: HttpHealthIndicator,
     private prismaHealth: PrismaHealthIndicator,
-    private prismaService: PrismaService
+    private prismaService: PrismaService,
   ) {}
 
   @Get()
@@ -21,7 +21,7 @@ export class HealthController {
   check() {
     return this.health.check([
       () => this.http.pingCheck('nestjs-docs', 'https://docs.nestjs.com'),
-      () => this.prismaHealth.pingCheck("database",this.prismaService)
+      () => this.prismaHealth.pingCheck('database', this.prismaService),
     ]);
   }
 }
