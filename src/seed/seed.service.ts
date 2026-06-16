@@ -392,6 +392,18 @@ export class SeedService {
         tx.menu_item_tags.create({
           data: { name: 'Recomendado', description: 'Recomendación del chef' },
         }),
+        tx.menu_item_tags.create({
+          data: { name: 'Del Mar', description: 'Platos de pescados y mariscos' },
+        }),
+        tx.menu_item_tags.create({
+          data: { name: 'Criolla', description: 'Platos de la cocina criolla peruana' },
+        }),
+        tx.menu_item_tags.create({
+          data: { name: 'Bebidas', description: 'Bebidas y tragos' },
+        }),
+        tx.menu_item_tags.create({
+          data: { name: 'Postres', description: 'Postres y dulces' },
+        }),
       ]);
       const menuTagMap = Object.fromEntries(
         menuTags.map((t) => [t.name, t.menu_item_tag_id]),
@@ -399,133 +411,24 @@ export class SeedService {
 
       // 9. Menu items (platos)
       const menuItemData = [
-        {
-          name: 'Ceviche Clásico',
-          description: 'Corvina, limón, ají limo, cebolla morada',
-          price: 35,
-          type: 'item' as const,
-          popular: true,
-        },
-        {
-          name: 'Jalea Mixta',
-          description: 'Pescado, calamar, langostino, yuca frita',
-          price: 42,
-          type: 'item' as const,
-          popular: true,
-        },
-        {
-          name: 'Sudado de Corvina',
-          description: 'Corvina en salsa criolla al wok',
-          price: 45,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Arroz con Mariscos',
-          description: 'Arroz, conchas, langostinos, cilantro',
-          price: 48,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Lomo Saltado',
-          description: 'Res, tomate, cebolla roja, papas fritas',
-          price: 38,
-          type: 'item' as const,
-          popular: true,
-        },
-        {
-          name: 'Ají de Gallina',
-          description: 'Gallina, ají amarillo, pan, nuez',
-          price: 32,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Carapulcra',
-          description: 'Papa seca, cerdo, maní, maíz',
-          price: 30,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Causa Rellena',
-          description: 'Papa amarilla, atún, palta, mayonesa',
-          price: 28,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Chicha Morada',
-          description: 'Chicha artesanal de la casa',
-          price: 8,
-          type: 'item' as const,
-          popular: true,
-        },
-        {
-          name: 'Maracuyá Sour',
-          description: 'Maracuyá, limón, pisco, jarabe',
-          price: 18,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Agua Mineral',
-          description: '500ml con o sin gas',
-          price: 5,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Arroz con Leche',
-          description: 'Arroz, leche evaporada, canela',
-          price: 14,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Mazamorra Morada',
-          description: 'Maíz morado, frutas, chuño',
-          price: 14,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Picarones',
-          description: 'Anillos de zapallo con miel de higo',
-          price: 16,
-          type: 'item' as const,
-          popular: true,
-        },
-        {
-          name: 'Tiradito de Lenguado',
-          description: 'Lenguado, crema de ají amarillo',
-          price: 40,
-          type: 'item' as const,
-          popular: false,
-        },
-        {
-          name: 'Chupe de Camarones',
-          description: 'Camarones, papa amarilla, leche',
-          price: 38,
-          type: 'item' as const,
-          popular: false,
-        },
-        // Combos
-        {
-          name: 'Combo Ceviche + Chicha',
-          description: 'Ceviche clásico + chicha morada',
-          price: 39,
-          type: 'combo' as const,
-          popular: true,
-        },
-        {
-          name: 'Combo Lomo + Maracuyá',
-          description: 'Lomo saltado + maracuyá sour',
-          price: 50,
-          type: 'combo' as const,
-          popular: false,
-        },
+        { name: 'Ceviche Clásico', description: 'Corvina, limón, ají limo, cebolla morada', price: 35, type: 'item' as const, popular: true, category: 'Del Mar' },
+        { name: 'Jalea Mixta', description: 'Pescado, calamar, langostino, yuca frita', price: 42, type: 'item' as const, popular: true, category: 'Del Mar' },
+        { name: 'Sudado de Corvina', description: 'Corvina en salsa criolla al wok', price: 45, type: 'item' as const, popular: false, category: 'Del Mar' },
+        { name: 'Arroz con Mariscos', description: 'Arroz, conchas, langostinos, cilantro', price: 48, type: 'item' as const, popular: false, category: 'Del Mar' },
+        { name: 'Lomo Saltado', description: 'Res, tomate, cebolla roja, papas fritas', price: 38, type: 'item' as const, popular: true, category: 'Criolla' },
+        { name: 'Ají de Gallina', description: 'Gallina, ají amarillo, pan, nuez', price: 32, type: 'item' as const, popular: false, category: 'Criolla' },
+        { name: 'Carapulcra', description: 'Papa seca, cerdo, maní, maíz', price: 30, type: 'item' as const, popular: false, category: 'Criolla' },
+        { name: 'Causa Rellena', description: 'Papa amarilla, atún, palta, mayonesa', price: 28, type: 'item' as const, popular: false, category: 'Criolla' },
+        { name: 'Chicha Morada', description: 'Chicha artesanal de la casa', price: 8, type: 'item' as const, popular: true, category: 'Bebidas' },
+        { name: 'Maracuyá Sour', description: 'Maracuyá, limón, pisco, jarabe', price: 18, type: 'item' as const, popular: false, category: 'Bebidas' },
+        { name: 'Agua Mineral', description: '500ml con o sin gas', price: 5, type: 'item' as const, popular: false, category: 'Bebidas' },
+        { name: 'Arroz con Leche', description: 'Arroz, leche evaporada, canela', price: 14, type: 'item' as const, popular: false, category: 'Postres' },
+        { name: 'Mazamorra Morada', description: 'Maíz morado, frutas, chuño', price: 14, type: 'item' as const, popular: false, category: 'Postres' },
+        { name: 'Picarones', description: 'Anillos de zapallo con miel de higo', price: 16, type: 'item' as const, popular: true, category: 'Postres' },
+        { name: 'Tiradito de Lenguado', description: 'Lenguado, crema de ají amarillo', price: 40, type: 'item' as const, popular: false, category: 'Del Mar' },
+        { name: 'Chupe de Camarones', description: 'Camarones, papa amarilla, leche', price: 38, type: 'item' as const, popular: false, category: 'Del Mar' },
+        { name: 'Combo Ceviche + Chicha', description: 'Ceviche clásico + chicha morada', price: 39, type: 'combo' as const, popular: true, category: null },
+        { name: 'Combo Lomo + Maracuyá', description: 'Lomo saltado + maracuyá sour', price: 50, type: 'combo' as const, popular: false, category: null },
       ];
 
       const menuItems = await Promise.all(
@@ -546,18 +449,16 @@ export class SeedService {
       );
 
       // 10. Menu item tagging
-      await Promise.all(
-        menuItemData
-          .filter((m) => m.popular)
-          .map((m) =>
-            tx.menu_item_tagging.create({
-              data: {
-                menu_item_id: menuItemMap[m.name],
-                menu_item_tag_id: menuTagMap['Popular'],
-              },
-            }),
-          ),
-      );
+      const taggingData: { menu_item_id: number; menu_item_tag_id: number }[] = [];
+      for (const m of menuItemData) {
+        if (m.popular) {
+          taggingData.push({ menu_item_id: menuItemMap[m.name], menu_item_tag_id: menuTagMap['Popular'] });
+        }
+        if (m.category) {
+          taggingData.push({ menu_item_id: menuItemMap[m.name], menu_item_tag_id: menuTagMap[m.category] });
+        }
+      }
+      await tx.menu_item_tagging.createMany({ data: taggingData });
 
       // 11. Combo descriptions
       const comboData = [

@@ -1,16 +1,13 @@
-import { Warehouse } from '../entities/warehouse.entity';
+import { IsString, IsOptional } from 'class-validator';
 
 export class CreateWarehouseDto {
-  name: Warehouse['name'];
-  address: Warehouse['address'];
-  description: Warehouse['description'];
-  constructor(
-    name: Warehouse['description'],
-    address: Warehouse['address'],
-    description: Warehouse['description'],
-  ) {
-    this.name = name;
-    this.address = address;
-    this.description = description;
-  }
+  @IsString()
+  name!: string;
+
+  @IsString()
+  location!: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
 }
