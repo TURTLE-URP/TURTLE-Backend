@@ -15,6 +15,7 @@ RUN npm cache clean --force
 # ==========================================
 FROM base AS development
 COPY . .
+RUN npx prisma generate
 ENTRYPOINT [ "npm", "run", "start:dev" ]
 
 # ==========================================
