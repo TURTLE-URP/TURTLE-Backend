@@ -10,7 +10,7 @@ export class WarehouseService {
   //   return this.prisma.warehouse.create({ data });
   // }
 
-  // findAll(listWarehouseDto: ListWarehousesDto) {
-  //   return this.prisma.warehouse.findMany({});
-  // }
+  findAll(listWarehouseDto: ListWarehousesDto) {
+    return this.prisma.storage_rooms.findMany();
+  }
 }

@@ -5,6 +5,11 @@ import { InventoryModule } from './inventory/inventory.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { SeedModule } from './seed/seed.module';
+import { TablesModule } from './tables/tables.module';
+import { MenuItemsModule } from './menu-items/menu-items.module';
+import { OrdersModule } from './orders/orders.module';
+import { AdminModule } from './admin/admin.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -13,6 +18,11 @@ import { HealthModule } from './health/health.module';
     InventoryModule,
     PrismaModule,
     HealthModule,
+    SeedModule,
+    TablesModule,
+    MenuItemsModule,
+    OrdersModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

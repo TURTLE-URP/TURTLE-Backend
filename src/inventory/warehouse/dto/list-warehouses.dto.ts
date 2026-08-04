@@ -1,10 +1,12 @@
-import { Warehouse } from '../entities/warehouse.entity';
+import { IsOptional, IsString, IsInt, Min } from 'class-validator';
 
 export class ListWarehousesDto {
-  name: Warehouse['name'] | undefined;
-  page: number | undefined;
-  constructor(name: Warehouse['name'] | undefined, page: number | undefined) {
-    this.name = name;
-    this.page = page;
-  }
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
 }

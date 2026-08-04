@@ -12,12 +12,12 @@ export class WarehouseController {
     @Query('name') name: ListWarehousesDto['name'],
     @Query('page') page: ListWarehousesDto['page'],
   ) {
-    return "lola"
+    return this.warehouseService.findAll({ name, page });
   }
 
   @Post()
   @HttpCode(201)
   createWarehouse(@Body() createWarehouseDto: CreateWarehouseDto) {
-    return "lol"
+    return 'lol';
   }
 }
