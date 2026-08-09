@@ -1,7 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { contact_method_type } from '@src/generated/prisma/client';
-import { CreateSupplierDto, UpdateSupplierDto } from './dto/create-supplier.dto';
+import {
+  CreateSupplierDto,
+  UpdateSupplierDto,
+} from './dto/create-supplier.dto';
 
 const include = {
   supplier_contact_methods: true,
@@ -15,7 +22,10 @@ export class AdminSuppliersService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.suppliers.findMany({ include, orderBy: { supplier_id: 'asc' } });
+    return this.prisma.suppliers.findMany({
+      include,
+      orderBy: { supplier_id: 'asc' },
+    });
   }
 
   async findOne(id: number) {
@@ -29,6 +39,14 @@ export class AdminSuppliersService {
 
   async create(dto: CreateSupplierDto) {
     const { contactMethods, catalogItems, ...data } = dto;
+    const existing = await this.prisma.suppliers.findUnique({
+      where: { ruc: data.ruc },
+    });
+    if (existing) {
+      throw new ConflictException(
+        `El proveedor con RUC '${data.ruc}' ya existe`,
+      );
+    }
     return this.prisma.suppliers.create({
       data: {
         ruc: data.ruc,
@@ -37,7 +55,7 @@ export class AdminSuppliersService {
           ? {
               supplier_contact_methods: {
                 create: contactMethods.map((cm) => ({
-                  method: cm.method as contact_method_type,
+                  method: cm.method,
                   contact: cm.contact,
                 })),
               },
@@ -67,15 +85,18 @@ export class AdminSuppliersService {
     const { contactMethods, catalogItems, ...data } = dto;
 
     const updateData: any = {};
-    if (data.companyName !== undefined) updateData.company_name = data.companyName;
+    if (data.companyName !== undefined)
+      updateData.company_name = data.companyName;
 
     if (contactMethods !== undefined) {
-      await this.prisma.supplier_contact_methods.deleteMany({ where: { supplier_id: id } });
+      await this.prisma.supplier_contact_methods.deleteMany({
+        where: { supplier_id: id },
+      });
       if (contactMethods.length) {
         await this.prisma.supplier_contact_methods.createMany({
           data: contactMethods.map((cm) => ({
             supplier_id: id,
-            method: cm.method as contact_method_type,
+            method: cm.method,
             contact: cm.contact,
           })),
         });
@@ -83,7 +104,9 @@ export class AdminSuppliersService {
     }
 
     if (catalogItems !== undefined) {
-      await this.prisma.supplier_catalog_items.deleteMany({ where: { supplier_id: id } });
+      await this.prisma.supplier_catalog_items.deleteMany({
+        where: { supplier_id: id },
+      });
       if (catalogItems.length) {
         await this.prisma.supplier_catalog_items.createMany({
           data: catalogItems.map((ci) => ({
@@ -100,7 +123,10 @@ export class AdminSuppliersService {
     }
 
     if (Object.keys(updateData).length) {
-      await this.prisma.suppliers.update({ where: { supplier_id: id }, data: updateData });
+      await this.prisma.suppliers.update({
+        where: { supplier_id: id },
+        data: updateData,
+      });
     }
 
     return this.findOne(id);

@@ -1,8 +1,20 @@
-import { Controller, Get, Post, Patch, Param, ParseIntPipe, Body, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  ParseIntPipe,
+  Body,
+  Query,
+} from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { customer_order_status_type } from '@src/generated/prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderStatusDto, UpdateOrderItemStatusDto } from './dto/update-order-status.dto';
+import {
+  UpdateOrderStatusDto,
+  UpdateOrderItemStatusDto,
+} from './dto/update-order-status.dto';
 
 @Controller('api/orders')
 export class OrdersController {

@@ -1,4 +1,13 @@
-import { IsInt, IsString, IsArray, ArrayMinSize, IsOptional, Min, ValidateNested, IsEnum } from 'class-validator';
+import {
+  IsInt,
+  IsString,
+  IsArray,
+  ArrayMinSize,
+  IsOptional,
+  Min,
+  ValidateNested,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { customer_order_type } from '@src/generated/prisma/client';
 

@@ -1,6 +1,30 @@
-import { IsString, IsNumber, IsOptional, IsArray, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  ValidateNested,
+  Min,
+} from 'class-validator';
+import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
-import { menu_item_status_type, menu_item_type } from '@src/generated/prisma/client';
+import {
+  menu_item_status_type,
+  menu_item_type,
+} from '@src/generated/prisma/client';
+
+export class MenuItemIngredientDto {
+  @IsNumber()
+  internalSupplyId!: number;
+
+  @IsNumber()
+  @Min(0.0001)
+  equivalenceFactor!: number;
+
+  @IsNumber()
+  storageRoomToExtractId!: number;
+}
 
 export class CreateProductDto {
   @IsString()
@@ -24,6 +48,12 @@ export class CreateProductDto {
   @IsArray()
   @IsString({ each: true })
   tags?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MenuItemIngredientDto)
+  ingredients?: MenuItemIngredientDto[];
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}

@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseIntPipe, Patch, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Body,
+} from '@nestjs/common';
 import { TablesService } from './tables.service';
 
 @Controller('api/tables')

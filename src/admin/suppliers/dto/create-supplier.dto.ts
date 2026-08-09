@@ -1,4 +1,11 @@
-import { IsString, IsNumber, IsOptional, IsArray, ValidateNested, IsEnum } from 'class-validator';
+import {
+  IsString,
+  IsNumber,
+  IsOptional,
+  IsArray,
+  ValidateNested,
+  IsEnum,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { PartialType } from '@nestjs/mapped-types';
 import { contact_method_type } from '@src/generated/prisma/client';

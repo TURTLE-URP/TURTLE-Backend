@@ -23,7 +23,11 @@ export class MenuItemsService {
         some: { menu_item_tags: { name: tag } },
       };
     }
-    return this.prisma.menu_items.findMany({ where, include: itemInclude, orderBy: { menu_item_id: 'asc' } });
+    return this.prisma.menu_items.findMany({
+      where,
+      include: itemInclude,
+      orderBy: { menu_item_id: 'asc' },
+    });
   }
 
   async findOne(id: number) {

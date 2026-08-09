@@ -9,12 +9,15 @@ export class TablesService {
     const table = await this.prisma.restaurant_table.findUnique({
       where: { table_number: tableNumber },
     });
-    if (!table) throw new NotFoundException(`Mesa #${tableNumber} no encontrada`);
+    if (!table)
+      throw new NotFoundException(`Mesa #${tableNumber} no encontrada`);
     return table;
   }
 
   async findAll() {
-    return this.prisma.restaurant_table.findMany({ orderBy: { table_number: 'asc' } });
+    return this.prisma.restaurant_table.findMany({
+      orderBy: { table_number: 'asc' },
+    });
   }
 
   async updateStatus(tableNumber: number, status: 'available' | 'occupied') {

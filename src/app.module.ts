@@ -10,6 +10,7 @@ import { TablesModule } from './tables/tables.module';
 import { MenuItemsModule } from './menu-items/menu-items.module';
 import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
+import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -23,6 +24,7 @@ import { AdminModule } from './admin/admin.module';
     MenuItemsModule,
     OrdersModule,
     AdminModule,
+    SupplyOrdersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

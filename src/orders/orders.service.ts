@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { customer_order_status_type, customer_order_item_status_type } from '@src/generated/prisma/client';
+import {
+  customer_order_status_type,
+  customer_order_item_status_type,
+} from '@src/generated/prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const TAX_RATE = 0.18;
@@ -13,13 +16,16 @@ export class OrdersService {
     const table = await this.prisma.restaurant_table.findUnique({
       where: { table_number: dto.tableNumber },
     });
-    if (!table) throw new NotFoundException(`Mesa #${dto.tableNumber} no encontrada`);
+    if (!table)
+      throw new NotFoundException(`Mesa #${dto.tableNumber} no encontrada`);
 
     const menuItemIds = dto.items.map((i) => i.menuItemId);
     const menuItems = await this.prisma.menu_items.findMany({
       where: { menu_item_id: { in: menuItemIds } },
     });
-    const priceMap = Object.fromEntries(menuItems.map((m) => [m.menu_item_id, Number(m.unit_price)]));
+    const priceMap = Object.fromEntries(
+      menuItems.map((m) => [m.menu_item_id, Number(m.unit_price)]),
+    );
 
     let subtotal = 0;
     const orderItemsData = dto.items.map((item) => {
@@ -77,7 +83,8 @@ export class OrdersService {
     const table = await this.prisma.restaurant_table.findUnique({
       where: { table_number: tableNumber },
     });
-    if (!table) throw new NotFoundException(`Mesa #${tableNumber} no encontrada`);
+    if (!table)
+      throw new NotFoundException(`Mesa #${tableNumber} no encontrada`);
     return this.prisma.customer_order.findMany({
       where: { restaurant_table_id: table.restaurant_table_id },
       include: {
@@ -103,11 +110,16 @@ export class OrdersService {
     });
   }
 
-  async updateItemStatus(orderId: number, itemId: number, status: customer_order_item_status_type) {
+  async updateItemStatus(
+    orderId: number,
+    itemId: number,
+    status: customer_order_item_status_type,
+  ) {
     const item = await this.prisma.customer_order_items.findFirst({
       where: { customer_order_item_id: itemId, customer_order_id: orderId },
     });
-    if (!item) throw new NotFoundException(`Item #${itemId} no encontrado en la orden`);
+    if (!item)
+      throw new NotFoundException(`Item #${itemId} no encontrado en la orden`);
     return this.prisma.customer_order_items.update({
       where: { customer_order_item_id: itemId },
       data: { status },

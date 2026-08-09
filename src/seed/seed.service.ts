@@ -393,10 +393,16 @@ export class SeedService {
           data: { name: 'Recomendado', description: 'Recomendación del chef' },
         }),
         tx.menu_item_tags.create({
-          data: { name: 'Del Mar', description: 'Platos de pescados y mariscos' },
+          data: {
+            name: 'Del Mar',
+            description: 'Platos de pescados y mariscos',
+          },
         }),
         tx.menu_item_tags.create({
-          data: { name: 'Criolla', description: 'Platos de la cocina criolla peruana' },
+          data: {
+            name: 'Criolla',
+            description: 'Platos de la cocina criolla peruana',
+          },
         }),
         tx.menu_item_tags.create({
           data: { name: 'Bebidas', description: 'Bebidas y tragos' },
@@ -411,24 +417,150 @@ export class SeedService {
 
       // 9. Menu items (platos)
       const menuItemData = [
-        { name: 'Ceviche Clásico', description: 'Corvina, limón, ají limo, cebolla morada', price: 35, type: 'item' as const, popular: true, category: 'Del Mar' },
-        { name: 'Jalea Mixta', description: 'Pescado, calamar, langostino, yuca frita', price: 42, type: 'item' as const, popular: true, category: 'Del Mar' },
-        { name: 'Sudado de Corvina', description: 'Corvina en salsa criolla al wok', price: 45, type: 'item' as const, popular: false, category: 'Del Mar' },
-        { name: 'Arroz con Mariscos', description: 'Arroz, conchas, langostinos, cilantro', price: 48, type: 'item' as const, popular: false, category: 'Del Mar' },
-        { name: 'Lomo Saltado', description: 'Res, tomate, cebolla roja, papas fritas', price: 38, type: 'item' as const, popular: true, category: 'Criolla' },
-        { name: 'Ají de Gallina', description: 'Gallina, ají amarillo, pan, nuez', price: 32, type: 'item' as const, popular: false, category: 'Criolla' },
-        { name: 'Carapulcra', description: 'Papa seca, cerdo, maní, maíz', price: 30, type: 'item' as const, popular: false, category: 'Criolla' },
-        { name: 'Causa Rellena', description: 'Papa amarilla, atún, palta, mayonesa', price: 28, type: 'item' as const, popular: false, category: 'Criolla' },
-        { name: 'Chicha Morada', description: 'Chicha artesanal de la casa', price: 8, type: 'item' as const, popular: true, category: 'Bebidas' },
-        { name: 'Maracuyá Sour', description: 'Maracuyá, limón, pisco, jarabe', price: 18, type: 'item' as const, popular: false, category: 'Bebidas' },
-        { name: 'Agua Mineral', description: '500ml con o sin gas', price: 5, type: 'item' as const, popular: false, category: 'Bebidas' },
-        { name: 'Arroz con Leche', description: 'Arroz, leche evaporada, canela', price: 14, type: 'item' as const, popular: false, category: 'Postres' },
-        { name: 'Mazamorra Morada', description: 'Maíz morado, frutas, chuño', price: 14, type: 'item' as const, popular: false, category: 'Postres' },
-        { name: 'Picarones', description: 'Anillos de zapallo con miel de higo', price: 16, type: 'item' as const, popular: true, category: 'Postres' },
-        { name: 'Tiradito de Lenguado', description: 'Lenguado, crema de ají amarillo', price: 40, type: 'item' as const, popular: false, category: 'Del Mar' },
-        { name: 'Chupe de Camarones', description: 'Camarones, papa amarilla, leche', price: 38, type: 'item' as const, popular: false, category: 'Del Mar' },
-        { name: 'Combo Ceviche + Chicha', description: 'Ceviche clásico + chicha morada', price: 39, type: 'combo' as const, popular: true, category: null },
-        { name: 'Combo Lomo + Maracuyá', description: 'Lomo saltado + maracuyá sour', price: 50, type: 'combo' as const, popular: false, category: null },
+        {
+          name: 'Ceviche Clásico',
+          description: 'Corvina, limón, ají limo, cebolla morada',
+          price: 35,
+          type: 'item' as const,
+          popular: true,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Jalea Mixta',
+          description: 'Pescado, calamar, langostino, yuca frita',
+          price: 42,
+          type: 'item' as const,
+          popular: true,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Sudado de Corvina',
+          description: 'Corvina en salsa criolla al wok',
+          price: 45,
+          type: 'item' as const,
+          popular: false,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Arroz con Mariscos',
+          description: 'Arroz, conchas, langostinos, cilantro',
+          price: 48,
+          type: 'item' as const,
+          popular: false,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Lomo Saltado',
+          description: 'Res, tomate, cebolla roja, papas fritas',
+          price: 38,
+          type: 'item' as const,
+          popular: true,
+          category: 'Criolla',
+        },
+        {
+          name: 'Ají de Gallina',
+          description: 'Gallina, ají amarillo, pan, nuez',
+          price: 32,
+          type: 'item' as const,
+          popular: false,
+          category: 'Criolla',
+        },
+        {
+          name: 'Carapulcra',
+          description: 'Papa seca, cerdo, maní, maíz',
+          price: 30,
+          type: 'item' as const,
+          popular: false,
+          category: 'Criolla',
+        },
+        {
+          name: 'Causa Rellena',
+          description: 'Papa amarilla, atún, palta, mayonesa',
+          price: 28,
+          type: 'item' as const,
+          popular: false,
+          category: 'Criolla',
+        },
+        {
+          name: 'Chicha Morada',
+          description: 'Chicha artesanal de la casa',
+          price: 8,
+          type: 'item' as const,
+          popular: true,
+          category: 'Bebidas',
+        },
+        {
+          name: 'Maracuyá Sour',
+          description: 'Maracuyá, limón, pisco, jarabe',
+          price: 18,
+          type: 'item' as const,
+          popular: false,
+          category: 'Bebidas',
+        },
+        {
+          name: 'Agua Mineral',
+          description: '500ml con o sin gas',
+          price: 5,
+          type: 'item' as const,
+          popular: false,
+          category: 'Bebidas',
+        },
+        {
+          name: 'Arroz con Leche',
+          description: 'Arroz, leche evaporada, canela',
+          price: 14,
+          type: 'item' as const,
+          popular: false,
+          category: 'Postres',
+        },
+        {
+          name: 'Mazamorra Morada',
+          description: 'Maíz morado, frutas, chuño',
+          price: 14,
+          type: 'item' as const,
+          popular: false,
+          category: 'Postres',
+        },
+        {
+          name: 'Picarones',
+          description: 'Anillos de zapallo con miel de higo',
+          price: 16,
+          type: 'item' as const,
+          popular: true,
+          category: 'Postres',
+        },
+        {
+          name: 'Tiradito de Lenguado',
+          description: 'Lenguado, crema de ají amarillo',
+          price: 40,
+          type: 'item' as const,
+          popular: false,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Chupe de Camarones',
+          description: 'Camarones, papa amarilla, leche',
+          price: 38,
+          type: 'item' as const,
+          popular: false,
+          category: 'Del Mar',
+        },
+        {
+          name: 'Combo Ceviche + Chicha',
+          description: 'Ceviche clásico + chicha morada',
+          price: 39,
+          type: 'combo' as const,
+          popular: true,
+          category: null,
+        },
+        {
+          name: 'Combo Lomo + Maracuyá',
+          description: 'Lomo saltado + maracuyá sour',
+          price: 50,
+          type: 'combo' as const,
+          popular: false,
+          category: null,
+        },
       ];
 
       const menuItems = await Promise.all(
@@ -449,13 +581,20 @@ export class SeedService {
       );
 
       // 10. Menu item tagging
-      const taggingData: { menu_item_id: number; menu_item_tag_id: number }[] = [];
+      const taggingData: { menu_item_id: number; menu_item_tag_id: number }[] =
+        [];
       for (const m of menuItemData) {
         if (m.popular) {
-          taggingData.push({ menu_item_id: menuItemMap[m.name], menu_item_tag_id: menuTagMap['Popular'] });
+          taggingData.push({
+            menu_item_id: menuItemMap[m.name],
+            menu_item_tag_id: menuTagMap['Popular'],
+          });
         }
         if (m.category) {
-          taggingData.push({ menu_item_id: menuItemMap[m.name], menu_item_tag_id: menuTagMap[m.category] });
+          taggingData.push({
+            menu_item_id: menuItemMap[m.name],
+            menu_item_tag_id: menuTagMap[m.category],
+          });
         }
       }
       await tx.menu_item_tagging.createMany({ data: taggingData });
@@ -755,6 +894,224 @@ export class SeedService {
         ),
       );
 
+      // 13. Suppliers (proveedores)
+      const supplierData = [
+        {
+          ruc: '20123456789',
+          companyName: 'Pesquera El Marino S.A.C.',
+          contacts: [
+            { method: 'phone' as const, contact: '+51 991 234 567' },
+            { method: 'WhatsApp' as const, contact: '+51 991 234 567' },
+          ],
+          catalog: [
+            {
+              code: 'ELM-COR-001',
+              name: 'Corvina entera 10kg',
+              supply: 'COR-001',
+              uom: 'kg',
+              price: 32,
+              factor: 1,
+            },
+            {
+              code: 'ELM-CAL-001',
+              name: 'Calamar limpio 5kg',
+              supply: 'CAL-001',
+              uom: 'kg',
+              price: 18,
+              factor: 1,
+            },
+            {
+              code: 'ELM-LAN-001',
+              name: 'Langostino 5kg',
+              supply: 'LAN-001',
+              uom: 'kg',
+              price: 35,
+              factor: 1,
+            },
+            {
+              code: 'ELM-CON-001',
+              name: 'Conchas de abanico',
+              supply: 'CON-001',
+              uom: 'kg',
+              price: 12,
+              factor: 1,
+            },
+          ],
+        },
+        {
+          ruc: '20345678901',
+          companyName: 'AgroAndina Distribuciones S.A.C.',
+          contacts: [
+            { method: 'phone' as const, contact: '+51 992 345 678' },
+            { method: 'email' as const, contact: 'ventas@agroandina.pe' },
+          ],
+          catalog: [
+            {
+              code: 'AGR-LIM-001',
+              name: 'Limón verde por caja',
+              supply: 'LIM-001',
+              uom: 'kg',
+              price: 3.5,
+              factor: 1,
+            },
+            {
+              code: 'AGR-CEB-001',
+              name: 'Cebolla roja por saco',
+              supply: 'CEB-001',
+              uom: 'kg',
+              price: 2.5,
+              factor: 1,
+            },
+            {
+              code: 'AGR-AJI-001',
+              name: 'Ají limo fresco',
+              supply: 'AJI-001',
+              uom: 'kg',
+              price: 8,
+              factor: 1,
+            },
+            {
+              code: 'AGR-CAM-001',
+              name: 'Camote amarillo',
+              supply: 'CAM-001',
+              uom: 'kg',
+              price: 2,
+              factor: 1,
+            },
+            {
+              code: 'AGR-PAP-001',
+              name: 'Papa amarilla selecta',
+              supply: 'PAP-001',
+              uom: 'kg',
+              price: 1.8,
+              factor: 1,
+            },
+            {
+              code: 'AGR-ZAP-001',
+              name: 'Zapallo loche',
+              supply: 'ZAP-001',
+              uom: 'kg',
+              price: 1.5,
+              factor: 1,
+            },
+            {
+              code: 'AGR-MAR-001',
+              name: 'Maracuyá dulce',
+              supply: 'MAR-001',
+              uom: 'kg',
+              price: 6,
+              factor: 1,
+            },
+            {
+              code: 'AGR-MAI-001',
+              name: 'Maíz morado',
+              supply: 'MAI-001',
+              uom: 'kg',
+              price: 4,
+              factor: 1,
+            },
+            {
+              code: 'AGR-CHO-001',
+              name: 'Choclo desgranado',
+              supply: 'CHO-001',
+              uom: 'unid',
+              price: 1.5,
+              factor: 1,
+            },
+          ],
+        },
+        {
+          ruc: '20456789012',
+          companyName: 'Mercado Central del Norte S.A.C.',
+          contacts: [
+            { method: 'phone' as const, contact: '+51 993 456 789' },
+            { method: 'WhatsApp' as const, contact: '+51 993 456 789' },
+          ],
+          catalog: [
+            {
+              code: 'MCN-ARR-001',
+              name: 'Arroz superior x25kg',
+              supply: 'ARR-001',
+              uom: 'kg',
+              price: 4.2,
+              factor: 1,
+            },
+            {
+              code: 'MCN-ACE-001',
+              name: 'Aceite vegetal x20L',
+              supply: 'ACE-001',
+              uom: 'L',
+              price: 12,
+              factor: 1,
+            },
+            {
+              code: 'MCN-GAL-001',
+              name: 'Gallina eviscerada',
+              supply: 'GAL-001',
+              uom: 'kg',
+              price: 9.5,
+              factor: 1,
+            },
+            {
+              code: 'MCN-RES-001',
+              name: 'Lomo de res',
+              supply: 'RES-001',
+              uom: 'kg',
+              price: 28,
+              factor: 1,
+            },
+          ],
+        },
+        {
+          ruc: '20567890123',
+          companyName: 'Bebidas y Licores Norte EIRL',
+          contacts: [
+            { method: 'email' as const, contact: 'pedidos@bylnorte.pe' },
+          ],
+          catalog: [
+            {
+              code: 'BLN-PIS-001',
+              name: 'Pisco puro quebranta',
+              supply: 'PIS-001',
+              uom: 'L',
+              price: 45,
+              factor: 1,
+            },
+          ],
+        },
+      ];
+
+      const suppliers = await Promise.all(
+        supplierData.map((s) =>
+          tx.suppliers.create({
+            data: {
+              ruc: s.ruc,
+              company_name: s.companyName,
+              supplier_contact_methods: {
+                create: s.contacts.map((c) => ({
+                  method: c.method,
+                  contact: c.contact,
+                })),
+              },
+              supplier_catalog_items: {
+                create: s.catalog.map((ci) => ({
+                  code: ci.code,
+                  name: ci.name,
+                  unit_price: ci.price,
+                  conversion_factor: ci.factor,
+                  unit_of_measurement_id: uom[ci.uom],
+                  internal_supply_id: supplyMap[ci.supply],
+                })),
+              },
+            },
+          }),
+        ),
+      );
+      const catalogItemCount = supplierData.reduce(
+        (sum, s) => sum + s.catalog.length,
+        0,
+      );
+
       return {
         units_of_measurement: units.length,
         storage_rooms: rooms.length,
@@ -768,6 +1125,12 @@ export class SeedService {
           0,
         ),
         menu_item_ingredients: ingredientsData.length,
+        suppliers: suppliers.length,
+        supplier_contact_methods: supplierData.reduce(
+          (sum, s) => sum + s.contacts.length,
+          0,
+        ),
+        supplier_catalog_items: catalogItemCount,
       };
     });
 
