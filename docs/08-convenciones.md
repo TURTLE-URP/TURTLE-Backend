@@ -98,4 +98,4 @@ El `ConfigModule` lee desde la raíz del proyecto. Si corres comandos desde otra
 
 ---
 
-[&larr; Anterior: API](./07-api.md) | [Volver al inicio](./README.md)
+[&larr; Anterior: API](./07-api.md) | [Siguiente: Integraciones DNI / RUC &rarr;](./09-integraciones-dni-ruc.md)

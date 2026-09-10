@@ -8,18 +8,26 @@ graph TD
     AppModule --> PrismaModule
     AppModule --> InventoryModule
     AppModule --> HealthModule
+    AppModule --> IntegrationsModule
     InventoryModule --> WarehouseModule
     InventoryModule --> SuppliesModule
     InventoryModule --> StockModule
+    IntegrationsModule --> RucModule
+    IntegrationsModule --> DniModule
+    IntegrationsModule --> CloudinaryModule
 
     style AppModule fill:#8957e5,stroke:#bc8cff,color:#fff
     style ConfigModule fill:#1f6feb,stroke:#58a6ff,color:#fff
     style PrismaModule fill:#238636,stroke:#3fb950,color:#fff
     style HealthModule fill:#9e6a03,stroke:#d29922,color:#fff
     style InventoryModule fill:#d29922,stroke:#f0c000,color:#fff
+    style IntegrationsModule fill:#d29922,stroke:#f0c000,color:#fff
     style WarehouseModule fill:#58a6ff,stroke:#79c0ff,color:#fff
     style SuppliesModule fill:#58a6ff,stroke:#79c0ff,color:#fff
     style StockModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style RucModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style DniModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style CloudinaryModule fill:#58a6ff,stroke:#79c0ff,color:#fff
 ```
 
 ---
@@ -33,6 +41,7 @@ graph TD
     InventoryModule,
     PrismaModule,
     HealthModule,
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -76,6 +85,20 @@ Agrupa tres submódulos:
 | `WarehouseModule` | ✅ Funcional | CRUD de `storage_rooms` |
 | `SuppliesModule` | ⏳ Scaffolded | Gestión de insumos |
 | `StockModule` | ⏳ Scaffolded | Control de stock |
+
+---
+
+## IntegrationsModule (agrupador)
+
+Consultas externas de identidad (sin persistencia):
+
+| Submódulo | Proveedor | Endpoint |
+|---|---|---|
+| `RucModule` | OpenRUC | `GET /ruc/:numero` |
+| `DniModule` | ApiInti | `GET /dni/:numero` |
+| `CloudinaryModule` | Cloudinary | `POST /media/upload`, `DELETE /media` |
+
+Detalle en [09 — DNI/RUC](./09-integraciones-dni-ruc.md) y [10 — Cloudinary](./10-cloudinary.md).
 
 ---
 

@@ -103,6 +103,48 @@ curl -X POST http://localhost:3000/warehouse \
 
 ---
 
+## `GET /ruc/:numero`
+
+**Consulta RUC vía OpenRUC** (sin API key). Ver [09 — Integraciones](./09-integraciones-dni-ruc.md).
+
+```bash
+curl http://localhost:3000/ruc/20100047218
+```
+
+---
+
+## `GET /dni/:numero`
+
+**Consulta DNI vía ApiInti** (requiere `APIINTI_API_KEY`). Ver [09 — Integraciones](./09-integraciones-dni-ruc.md).
+
+```bash
+curl http://localhost:3000/dni/12345678
+```
+
+---
+
+## `POST /media/upload`
+
+**Sube una imagen a Cloudinary.** Ver [10 — Cloudinary](./10-cloudinary.md).
+
+```bash
+curl -X POST "http://localhost:3000/media/upload" -F "file=@./foto.png"
+```
+
+---
+
+## `DELETE /media`
+
+**Borra una imagen de Cloudinary por `publicId`.**
+
+```bash
+curl -X DELETE http://localhost:3000/media \
+  -H "Content-Type: application/json" \
+  -d '{"publicId":"turtle/abc123"}'
+```
+
+---
+
 ## Convenciones generales
 
 | Concepto | Valor |

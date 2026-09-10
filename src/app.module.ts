@@ -5,6 +5,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -13,6 +14,7 @@ import { HealthModule } from './health/health.module';
     InventoryModule,
     PrismaModule,
     HealthModule,
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

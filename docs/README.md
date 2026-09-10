@@ -19,6 +19,8 @@ flowchart LR
     E --> F["06 Desarrollo"]
     F --> G["07 API"]
     G --> H["08 Convenciones"]
+    H --> I["09 DNI / RUC"]
+    I --> J["10 Cloudinary"]
 
     style A fill:#1f6feb,stroke:#58a6ff,color:#fff
     style B fill:#1f6feb,stroke:#58a6ff,color:#fff
@@ -28,6 +30,8 @@ flowchart LR
     style F fill:#1f6feb,stroke:#58a6ff,color:#fff
     style G fill:#1f6feb,stroke:#58a6ff,color:#fff
     style H fill:#238636,stroke:#3fb950,color:#fff
+    style I fill:#238636,stroke:#3fb950,color:#fff
+    style J fill:#238636,stroke:#3fb950,color:#fff
 ```
 
 ---
@@ -44,6 +48,8 @@ flowchart LR
 | 06 | Desarrollo local | [Abrir](./06-desarrollo.md) |
 | 07 | API endpoints | [Abrir](./07-api.md) |
 | 08 | Convenciones y troubleshooting | [Abrir](./08-convenciones.md) |
+| 09 | Integraciones DNI / RUC | [Abrir](./09-integraciones-dni-ruc.md) |
+| 10 | Cloudinary (media) | [Abrir](./10-cloudinary.md) |
 
 ---
 
@@ -57,6 +63,10 @@ src/
 ├── app.service.ts             # Servicio raíz
 ├── prisma/                    # Conexión a BD (global)
 ├── health/                    # Health checks
+├── integrations/              # Proveedores externos
+│   ├── ruc/                   # OpenRUC (SUNAT funcional)
+│   ├── dni/                   # ApiInti (RENIEC funcional)
+│   └── cloudinary/            # Upload de imágenes
 └── inventory/                 # Módulo de inventario
     ├── warehouse/             # Almacenes (CRUD funcional)
     ├── supplies/              # Insumos (scaffolded)
