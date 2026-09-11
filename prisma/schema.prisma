@@ -33,6 +33,7 @@ model customer_order {
   order_type           customer_order_type
   restaurant_table     restaurant_table?                  @relation(fields: [restaurant_table_id], references: [restaurant_table_id], onDelete: Restrict, onUpdate: NoAction, map: "customer_order_restaurant_table_fk")
   customer_order_items customer_order_items[]
+  comanda              comanda[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -125,6 +126,7 @@ model menu_items {
   customer_order_items                                          customer_order_items[]
   menu_item_ingredients                                         menu_item_ingredients[]
   menu_item_tagging                                             menu_item_tagging[]
+  comanda_items                                                 comanda_items[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -285,4 +287,46 @@ enum supply_order_status_type {
   acordada  @map("Acordada")
   entregada @map("Entregada")
   error     @map("Error")
+}
+
+enum kitchen_movement_status {
+  pending
+  preparing
+  ready
+  delivered
+}
+
+model comanda {
+  comanda_id        Int      @id @default(autoincrement())
+  code              String   @db.VarChar
+  ready             Boolean  @default(false)
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @db.Timestamp(6)
+  customer_order_id Int
+  customer_order    customer_order @relation(fields: [customer_order_id], references: [customer_order_id], onDelete: Cascade, onUpdate: NoAction, map: "comanda_customer_order_fk")
+  comanda_items     comanda_items[]
+}
+
+model comanda_items {
+  comanda_item_id   Int      @id @default(autoincrement())
+  quantity          Int      @db.SmallInt
+  notes             String?  @db.VarChar
+  created_at        DateTime @default(now()) @db.Timestamp(6)
+  updated_at        DateTime? @db.Timestamp(6)
+  comanda_id        Int
+  menu_item_id      Int
+  comanda           comanda @relation(fields: [comanda_id], references: [comanda_id], onDelete: Cascade, onUpdate: NoAction, map: "comanda_items_comanda_fk")
+  menu_items        menu_items @relation(fields: [menu_item_id], references: [menu_item_id], onUpdate: NoAction, map: "comanda_items_menu_items_fk")
+  kitchen_movements kitchen_movements[]
+}
+
+model kitchen_movements {
+  kitchen_movement_id Int      @id @default(autoincrement())
+  timestamp           DateTime @default(now()) @db.Timestamp(6)
+  status              kitchen_movement_status
+  quantity            Int      @db.SmallInt
+  created_at          DateTime @default(now()) @db.Timestamp(6)
+  updated_at          DateTime? @db.Timestamp(6)
+  comanda_item_id     Int
+  comanda_items       comanda_items @relation(fields: [comanda_item_id], references: [comanda_item_id], onDelete: Cascade, onUpdate: NoAction, map: "kitchen_movements_comanda_items_fk")
 }

@@ -11,6 +11,7 @@ import { MenuItemsModule } from './menu-items/menu-items.module';
 import { OrdersModule } from './orders/orders.module';
 import { AdminModule } from './admin/admin.module';
 import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
+import { ComandasModule } from './comandas/comandas.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -25,6 +26,7 @@ import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
     OrdersModule,
     AdminModule,
     SupplyOrdersModule,
+    ComandasModule,
   ],
   controllers: [AppController],
   providers: [AppService],
