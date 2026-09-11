@@ -15,6 +15,7 @@ import { ComandasModule } from './comandas/comandas.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CustomersModule } from './customers/customers.module';
 import { UsersModule } from './users/users.module';
+import { AuditModule } from './audit/audit.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -33,6 +34,7 @@ import { UsersModule } from './users/users.module';
     PaymentsModule,
     CustomersModule,
     UsersModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

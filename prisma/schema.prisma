@@ -395,12 +395,13 @@ enum user_type {
 }
 
 model user {
-  user_id     Int       @id @default(autoincrement())
-  email       String    @unique @db.VarChar
-  user_type   user_type
-  created_at  DateTime  @default(now()) @db.Timestamp(6)
-  updated_at  DateTime? @db.Timestamp(6)
-  deleted_at  DateTime? @db.Timestamp(6)
+  user_id      Int            @id @default(autoincrement())
+  email        String         @unique @db.VarChar
+  user_type    user_type
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime?      @db.Timestamp(6)
+  deleted_at   DateTime?      @db.Timestamp(6)
+  system_audit system_audit[]
 }
 
 enum worker_role_type {
@@ -418,4 +419,24 @@ model worker {
   role          worker_role_type
   created_at    DateTime          @default(now()) @db.Timestamp(6)
   updated_at    DateTime?         @db.Timestamp(6)
+}
+
+enum audit_action_type {
+  create
+  read
+  update
+  soft_delete
+  restore
+}
+
+model system_audit {
+  system_audit_id Int               @id @default(autoincrement())
+  user_id         Int
+  action          audit_action_type
+  affected_table  String            @db.VarChar
+  row_id          String            @db.VarChar
+  ip_address      String            @db.VarChar
+  user_agent      String            @db.Text
+  timestamp       DateTime          @default(now()) @db.Timestamp(6)
+  user            user              @relation(fields: [user_id], references: [user_id], onDelete: Restrict, onUpdate: NoAction, map: "system_audit_user_fk")
 }
