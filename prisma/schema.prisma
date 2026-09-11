@@ -34,6 +34,7 @@ model customer_order {
   restaurant_table     restaurant_table?                  @relation(fields: [restaurant_table_id], references: [restaurant_table_id], onDelete: Restrict, onUpdate: NoAction, map: "customer_order_restaurant_table_fk")
   customer_order_items customer_order_items[]
   comanda              comanda[]
+  payment              payment[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -127,6 +128,7 @@ model menu_items {
   menu_item_ingredients                                         menu_item_ingredients[]
   menu_item_tagging                                             menu_item_tagging[]
   comanda_items                                                 comanda_items[]
+  payment_details                                               payment_details[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -329,4 +331,39 @@ model kitchen_movements {
   updated_at          DateTime? @db.Timestamp(6)
   comanda_item_id     Int
   comanda_items       comanda_items @relation(fields: [comanda_item_id], references: [comanda_item_id], onDelete: Cascade, onUpdate: NoAction, map: "kitchen_movements_comanda_items_fk")
+}
+
+enum payment_method_type {
+  cash
+  credit_card
+  debit_card
+  yape
+  plin
+  transfer
+}
+
+model payment {
+  payment_id         Int                  @id @default(autoincrement())
+  code               String               @db.VarChar(10)
+  payment_method     payment_method_type
+  amount             Decimal              @db.Decimal(10, 2)
+  receipt_url        String?              @db.Text
+  created_at         DateTime             @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?            @db.Timestamp(6)
+  customer_order_id  Int
+  customer_order     customer_order       @relation(fields: [customer_order_id], references: [customer_order_id], onDelete: Cascade, onUpdate: NoAction, map: "payment_customer_order_fk")
+  payment_details    payment_details[]
+}
+
+model payment_details {
+  payment_detail_id  Int      @id @default(autoincrement())
+  quantity           Int      @db.SmallInt
+  subtotal           Decimal  @db.Decimal(10, 2)
+  tax                Decimal  @db.Decimal(10, 2)
+  created_at         DateTime @default(now()) @db.Timestamp(6)
+  updated_at         DateTime? @db.Timestamp(6)
+  payment_id         Int
+  menu_item_id       Int
+  payment            payment  @relation(fields: [payment_id], references: [payment_id], onDelete: Cascade, onUpdate: NoAction, map: "payment_details_payment_fk")
+  menu_items         menu_items @relation(fields: [menu_item_id], references: [menu_item_id], onUpdate: NoAction, map: "payment_details_menu_items_fk")
 }
