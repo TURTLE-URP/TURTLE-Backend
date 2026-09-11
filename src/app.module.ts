@@ -14,6 +14,7 @@ import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
 import { ComandasModule } from './comandas/comandas.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CustomersModule } from './customers/customers.module';
+import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -31,6 +32,7 @@ import { CustomersModule } from './customers/customers.module';
     ComandasModule,
     PaymentsModule,
     CustomersModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],
