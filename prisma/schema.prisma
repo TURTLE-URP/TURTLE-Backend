@@ -151,6 +151,7 @@ model storage_rooms {
   location                   String                       @db.VarChar
   internal_supplies_location internal_supplies_location[]
   menu_item_ingredients      menu_item_ingredients[]
+  supply_order_warehouses    supply_order_warehouses[]
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -184,6 +185,7 @@ model suppliers {
   supplier_id              Int                        @id(map: "suppliers_pk") @default(autoincrement())
   ruc                      String                     @unique(map: "suppliers_unique_ruc") @db.Char(11)
   company_name             String                     @db.VarChar
+  commercial_name          BigInt?                    @db.BigInt
   supplier_catalog_items   supplier_catalog_items[]
   supplier_contact_methods supplier_contact_methods[]
   supply_orders            supply_orders[]
@@ -219,8 +221,9 @@ model supply_orders {
   total_amount    Decimal                    @default(0.00) @db.Decimal(10, 2)
   supplier_id     Int
 
-  suppliers             suppliers               @relation(fields: [supplier_id], references: [supplier_id], onDelete: Restrict, onUpdate: NoAction, map: "supply_orders_suppliers_fk")
+  suppliers             suppliers                 @relation(fields: [supplier_id], references: [supplier_id], onDelete: Restrict, onUpdate: NoAction, map: "supply_orders_suppliers_fk")
   supply_order_contents supply_order_contents[]
+  supply_order_warehouses supply_order_warehouses[]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -439,4 +442,13 @@ model system_audit {
   user_agent      String            @db.Text
   timestamp       DateTime          @default(now()) @db.Timestamp(6)
   user            user              @relation(fields: [user_id], references: [user_id], onDelete: Restrict, onUpdate: NoAction, map: "system_audit_user_fk")
+}
+
+model supply_order_warehouses {
+  supply_order_warehouse_id Int          @id @default(autoincrement())
+  quantity                  BigInt       @db.BigInt
+  supply_order_id           Int
+  storage_room_id           Int
+  supply_orders             supply_orders @relation(fields: [supply_order_id], references: [supply_order_id], onDelete: Cascade, onUpdate: NoAction, map: "supply_order_warehouses_supply_orders_fk")
+  storage_rooms             storage_rooms @relation(fields: [storage_room_id], references: [storage_room_id], onDelete: Cascade, onUpdate: NoAction, map: "supply_order_warehouses_storage_rooms_fk")
 }

@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { CustomersModule } from './customers/customers.module';
 import { UsersModule } from './users/users.module';
 import { AuditModule } from './audit/audit.module';
+import { SupplyOrderWarehousesModule } from './supply-order-warehouses/supply-order-warehouses.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,6 +36,7 @@ import { AuditModule } from './audit/audit.module';
     CustomersModule,
     UsersModule,
     AuditModule,
+    SupplyOrderWarehousesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
