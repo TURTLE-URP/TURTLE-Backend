@@ -1,245 +1,571 @@
 generator client {
-  provider     = "prisma-client"
+  provider = "prisma-client-js"
   output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model combo_description {
-  combo_description_id                                   Int        @id(map: "combo_description_pk") @default(autoincrement())
-  equivalence_factor                                     Decimal    @db.Decimal
-  menu_item_id                                           Int
-  combo_item_id                                          Int
-  menu_items_combo_description_combo_item_idTomenu_items menu_items @relation("combo_description_combo_item_idTomenu_items", fields: [combo_item_id], references: [menu_item_id], onDelete: Cascade, onUpdate: NoAction, map: "combo_description_menu_items_combo_fk")
-  menu_items_combo_description_menu_item_idTomenu_items  menu_items @relation("combo_description_menu_item_idTomenu_items", fields: [menu_item_id], references: [menu_item_id], onDelete: Cascade, onUpdate: NoAction, map: "combo_description_menu_items_fk")
-}
+// ---------- ENUMS (ajusta valores según tu negocio) ----------
 
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model customer_order {
-  customer_order_id    Int                                @id(map: "customer_order_pk") @default(autoincrement())
-  created_at           DateTime                           @default(now()) @db.Timestamp(6)
-  payment_status       customer_order_payment_status_type @default(pending)
-  status               customer_order_status_type         @default(pending)
-  subtotal             Decimal                            @default(0.00) @db.Decimal(10, 2)
-  tax                  Decimal                            @default(0.00) @db.Decimal(10, 2)
-  customer_name        String                             @db.VarChar
-  customer_id          String                             @db.VarChar
-  restaurant_table_id  Int?
-  order_type           customer_order_type
-  restaurant_table     restaurant_table?                  @relation(fields: [restaurant_table_id], references: [restaurant_table_id], onDelete: Restrict, onUpdate: NoAction, map: "customer_order_restaurant_table_fk")
-  customer_order_items customer_order_items[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model customer_order_items {
-  customer_order_item_id Int                             @id(map: "customer_order_details_pk") @default(autoincrement())
-  quantity               Int                             @db.SmallInt
-  customer_comments      String?                         @db.VarChar
-  status                 customer_order_item_status_type @default(pending)
-  customer_order_id      Int
-  menu_item_id           Int
-  customer_order         customer_order                  @relation(fields: [customer_order_id], references: [customer_order_id], onDelete: Cascade, onUpdate: NoAction, map: "customer_order_items_customer_order_fk")
-  menu_items             menu_items                      @relation(fields: [menu_item_id], references: [menu_item_id], onUpdate: NoAction, map: "customer_order_items_menu_items_fk")
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model internal_supplies {
-  internal_supply_id         Int                          @id(map: "internal_supplies_pk") @default(autoincrement())
-  code                       String                       @unique(map: "internal_supplies_unique") @db.VarChar
-  name                       String                       @db.VarChar
-  image_url                  String?
-  max_stock                  Decimal                      @db.Decimal(10, 3)
-  min_stock                  Decimal                      @default(0) @db.Decimal(10, 3)
-  unit_of_measurement_id     Int
-  current_stock              Decimal                      @default(0) @db.Decimal(10, 3)
-  units_of_measurement       units_of_measurement         @relation(fields: [unit_of_measurement_id], references: [unit_of_measurement_id], onUpdate: NoAction, map: "internal_supplies_units_of_measurement_fk")
-  internal_supplies_location internal_supplies_location[]
-  menu_item_ingredients      menu_item_ingredients[]
-  supplier_catalog_items     supplier_catalog_items[]
-  supply_tagging             supply_tagging[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model internal_supplies_location {
-  internal_supplies_location_id Int               @id(map: "internal_supplies_location_pk") @default(autoincrement())
-  current_stock                 Decimal           @default(0) @db.Decimal(10, 3)
-  storage_room_id               Int
-  internal_supply_id            Int
-  internal_supplies             internal_supplies @relation(fields: [internal_supply_id], references: [internal_supply_id], onDelete: Cascade, onUpdate: NoAction, map: "internal_supplies_location_internal_supplies_fk")
-  storage_rooms                 storage_rooms     @relation(fields: [storage_room_id], references: [storage_room_id], onDelete: Cascade, onUpdate: NoAction, map: "internal_supplies_location_storage_rooms_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model internal_supply_tags {
-  internal_supply_tag_id Int              @id(map: "internal_supply_tags_pk") @default(autoincrement())
-  name                   String           @unique(map: "internal_supply_tags_unique") @db.VarChar
-  description            String           @db.VarChar
-  supply_tagging         supply_tagging[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model menu_item_ingredients {
-  menu_item_ingredient_id    Int               @id(map: "menu_item_ingredients_pk") @default(autoincrement())
-  equivalence_factor         Decimal           @db.Decimal
-  internal_supply_id         Int
-  menu_item_id               Int
-  storage_room_to_extract_id Int
-  internal_supplies          internal_supplies @relation(fields: [internal_supply_id], references: [internal_supply_id], onDelete: Cascade, onUpdate: NoAction, map: "menu_item_ingredients_internal_supplies_fk")
-  menu_items                 menu_items        @relation(fields: [menu_item_id], references: [menu_item_id], onDelete: Cascade, onUpdate: NoAction, map: "menu_item_ingredients_menu_items_fk")
-  storage_rooms              storage_rooms     @relation(fields: [storage_room_to_extract_id], references: [storage_room_id], onUpdate: NoAction, map: "menu_item_ingredients_storage_rooms_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model menu_item_tagging {
-  menu_item_tagging_id Int            @id(map: "menu_item_tagging_pk") @default(autoincrement())
-  menu_item_tag_id     Int
-  menu_item_id         Int
-  menu_item_tags       menu_item_tags @relation(fields: [menu_item_tag_id], references: [menu_item_tag_id], onDelete: Cascade, onUpdate: NoAction, map: "menu_item_tagging_menu_item_tags_fk")
-  menu_items           menu_items     @relation(fields: [menu_item_id], references: [menu_item_id], onDelete: Cascade, onUpdate: NoAction, map: "menu_item_tagging_menu_items_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model menu_item_tags {
-  menu_item_tag_id  Int                 @id(map: "menu_item_tags_pk") @default(autoincrement())
-  name              String              @unique(map: "menu_item_tags_unique") @db.VarChar
-  description       String              @db.VarChar
-  menu_item_tagging menu_item_tagging[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model menu_items {
-  menu_item_id                                                  Int                     @id(map: "menu_items_pk") @default(autoincrement())
-  name                                                          String                  @db.VarChar
-  description                                                   String                  @db.VarChar
-  unit_price                                                    Decimal                 @default(0.00) @db.Decimal(10, 2)
-  status                                                        menu_item_status_type
-  type                                                          menu_item_type
-  combo_description_combo_description_combo_item_idTomenu_items combo_description[]     @relation("combo_description_combo_item_idTomenu_items")
-  combo_description_combo_description_menu_item_idTomenu_items  combo_description[]     @relation("combo_description_menu_item_idTomenu_items")
-  customer_order_items                                          customer_order_items[]
-  menu_item_ingredients                                         menu_item_ingredients[]
-  menu_item_tagging                                             menu_item_tagging[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model restaurant_table {
-  restaurant_table_id Int                          @id(map: "restaurant_table_pk") @default(autoincrement())
-  capacity            Int                          @default(1) @db.SmallInt
-  status              restaurant_table_status_type @default(available)
-  qrtoken             String                       @default("token")
-  table_number        Int                          @unique(map: "restaurant_table_unique") @db.SmallInt
-  customer_order      customer_order[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model storage_rooms {
-  storage_room_id            Int                          @id(map: "storage_rooms_pk") @default(autoincrement())
-  name                       String                       @db.VarChar
-  description                String                       @default("") @db.VarChar
-  location                   String                       @db.VarChar
-  internal_supplies_location internal_supplies_location[]
-  menu_item_ingredients      menu_item_ingredients[]
-}
-
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model supplier_catalog_items {
-  supplier_catalog_item_id Int                  @id(map: "supplier_catalog_items_pk") @default(autoincrement())
-  code                     String               @unique(map: "supplier_catalog_items_unique") @db.VarChar
-  name                     String               @db.VarChar
-  unit_price               Decimal              @default(0.01) @db.Decimal(10, 2)
-  conversion_factor        Decimal              @default(1.00) @db.Decimal
-  unit_of_measurement_id   Int
-  supplier_id              Int
-  internal_supply_id       Int
-  internal_supplies        internal_supplies    @relation(fields: [internal_supply_id], references: [internal_supply_id], onUpdate: NoAction, map: "supplier_catalog_items_internal_supplies_fk")
-  suppliers                suppliers            @relation(fields: [supplier_id], references: [supplier_id], onDelete: Cascade, onUpdate: NoAction, map: "supplier_catalog_items_suppliers_fk")
-  units_of_measurement     units_of_measurement @relation(fields: [unit_of_measurement_id], references: [unit_of_measurement_id], onUpdate: NoAction, map: "supplier_catalog_items_units_of_measurement_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model supplier_contact_methods {
-  supplier_contact_method_id Int                 @id(map: "supplier_contact_methods_pk") @default(autoincrement())
-  method                     contact_method_type
-  contact                    String              @db.VarChar
-  supplier_id                Int
-  suppliers                  suppliers           @relation(fields: [supplier_id], references: [supplier_id], onDelete: Cascade, onUpdate: NoAction, map: "supplier_contact_methods_suppliers_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model suppliers {
-  supplier_id              Int                        @id(map: "suppliers_pk") @default(autoincrement())
-  ruc                      String                     @unique(map: "suppliers_unique_ruc") @db.Char(11)
-  company_name             String                     @db.VarChar
-  supplier_catalog_items   supplier_catalog_items[]
-  supplier_contact_methods supplier_contact_methods[]
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model supply_tagging {
-  supply_tagging_id      Int                  @id(map: "supply_tagging_pk") @default(autoincrement())
-  internal_supply_tag_id Int
-  internal_supply_id     Int
-  internal_supplies      internal_supplies    @relation(fields: [internal_supply_id], references: [internal_supply_id], onUpdate: NoAction, map: "supply_tagging_internal_supplies_fk")
-  internal_supply_tags   internal_supply_tags @relation(fields: [internal_supply_tag_id], references: [internal_supply_tag_id], onUpdate: NoAction, map: "supply_tagging_internal_supply_tags_fk")
-}
-
-/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
-model units_of_measurement {
-  name                   String                   @db.VarChar
-  unit_of_measurement_id Int                      @id(map: "units_of_measurement_pk") @default(autoincrement())
-  symbol                 String                   @unique(map: "units_of_measurement_unique") @db.VarChar
-  internal_supplies      internal_supplies[]
-  supplier_catalog_items supplier_catalog_items[]
-}
-
-enum contact_method_type {
-  email
-  phone
-  WhatsApp
-}
-
-enum customer_order_item_status_type {
-  pending
-  preparing
-  finished
-}
-
-enum customer_order_payment_status_type {
-  pending
-  paid
-}
-
-enum customer_order_status_type {
-  pending
-  preparing
-  on_the_way @map("on the way")
-  delivered
-}
-
-enum customer_order_type {
-  dine_in  @map("dine in")
-  take_out @map("take out")
+enum pedido_tipo {
+  para_llevar
+  local
   delivery
 }
 
-enum menu_item_status_type {
-  available
-  out_of_stock @map("out of stock")
-  discontinued
+enum mesa_piso {
+  piso_1
+  piso_2
 }
 
-enum menu_item_type {
-  combo
-  item
+enum pago_medio_pago {
+  efectivo
+  transferencia
+  yape
+  plin
 }
 
-enum restaurant_table_status_type {
-  available
-  occupied
+enum platos_categoria {
+  postre
+  entrada
+  principal
+  refresco
+}
+
+enum movimiento_estado {
+  pendiente
+  en_preparacion
+  terminado
+}
+
+enum usuario_tipo {
+  trabajador
+  cliente_digital
+}
+
+enum trabajador_rol {
+  anfitrion
+  mozo
+  cocinero
+  asistente_de_cocina
+  almacenero
+  jefe
+  administrador
+}
+
+enum cliente_auth_provider {
+  google
+}
+
+enum auditoria_accion {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+enum proveedor_contacto_tipo {
+  WhatsApp
+  Correo
+}
+
+enum unidad_tipo {
+  masa
+  volumen
+}
+
+enum orden_estado {
+  emitida
+  cancelada
+}
+
+enum movimiento_almacen_tipo {
+  ENTRADA_DISTRIBUCION
+  SALIDA_COMANDA
+  AJUSTE_INVENTARIO
+  MERMA
+}
+
+enum reporte_merma_estado {
+  pendiente
+  aprobado
+  rechazado
+}
+
+model Pedido {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  IGV Decimal @db.Decimal(10, 2)
+  subtotal Decimal @db.Decimal(10, 2)
+  documento_cliente_local String?
+  nombre_cliente_local String?
+  tipo pedido_tipo
+  id_mesa BigInt? @db.BigInt
+  id_cliente_digital BigInt? @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt? @db.BigInt
+  updated_at DateTime @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  mesa Mesa? @relation(fields: [id_mesa], references: [id])
+  cliente Cliente_Digital? @relation(fields: [id_cliente_digital], references: [id])
+  pagos Pago_Cliente[]
+  detalles Detalles_Pedido[]
+  comandas Comanda[]
+}
+
+model Mesa {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  numero_mesa Int @db.SmallInt
+  capacidad Int @db.SmallInt
+  ocupado Boolean @default(false)
+  piso mesa_piso
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  pedidos Pedido[]
+}
+
+model Pago_Cliente {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  medio_pago pago_medio_pago
+  monto Decimal @db.Decimal(10, 2)
+  url_comprobante String? @db.Text
+  id_pedido BigInt @db.BigInt
+  created_at DateTime @db.Timestamp()
+
+  pedido Pedido @relation(fields: [id_pedido], references: [id])
+  detalles Detalles_Pago_Cliente[]
+}
+
+model Detalles_Pedido {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_menu_item BigInt @db.BigInt
+  cantidad Int @db.SmallInt
+  subtotal Decimal @db.Decimal(10, 2)
+  id_pedido BigInt @db.BigInt
+
+  pedido Pedido @relation(fields: [id_pedido], references: [id])
+  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+}
+
+model Detalles_Pago_Cliente {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_menu_item BigInt @db.BigInt
+  cantidad Int @db.SmallInt
+  subtotal Decimal @db.Decimal(10, 2)
+  IGV Decimal @db.Decimal(10, 2)
+  id_pago BigInt @db.BigInt
+
+  pago Pago_Cliente @relation(fields: [id_pago], references: [id])
+  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+}
+
+model Platos_Menu {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  nombre String
+  descripcion String
+  precio Decimal @db.Decimal(10, 2)
+  categoria platos_categoria
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  detalles_pedido Detalles_Pedido[]
+  detalles_pago Detalles_Pago_Cliente[]
+  detalles_comanda Detalles_Comanda[]
+  ingredientes Ingredientes_Plato[]
+}
+
+model Comanda {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  listo Boolean @default(false)
+  fecha_hora_emision DateTime @db.Timestamp()
+  fecha_hora_listo DateTime? @db.Timestamp()
+  id_pedido BigInt @db.BigInt
+
+  pedido Pedido @relation(fields: [id_pedido], references: [id])
+  detalles Detalles_Comanda[]
+  movimientos_almacen Movimiento_Almacen[]
+}
+
+model Detalles_Comanda {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_menu_item BigInt @db.BigInt
+  cantidad Int @db.SmallInt
+  notas String?
+  id_comanda BigInt @db.BigInt
+
+  comanda Comanda @relation(fields: [id_comanda], references: [id])
+  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+  movimientos Movimientos_Cocina[]
+}
+
+model Movimientos_Cocina {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  fecha_hora DateTime @db.Timestamp()
+  estado_platillo movimiento_estado
+  cantidad Int @db.SmallInt
+  id_detalle_comanda BigInt @db.BigInt
+
+  detalle Detalles_Comanda @relation(fields: [id_detalle_comanda], references: [id])
+}
+
+model Ingredientes_Plato {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_insumo BigInt @db.BigInt
+  id_medida_insumo BigInt @db.BigInt
+  cantidad Decimal @db.Decimal
+  id_almacen_sustraccion BigInt @db.BigInt
+  id_plato BigInt @db.BigInt
+
+  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  medida Insumo_Medidas @relation(fields: [id_medida_insumo], references: [id])
+  almacen Almacen @relation(fields: [id_almacen_sustraccion], references: [id])
+  plato Platos_Menu @relation(fields: [id_plato], references: [id])
+}
+
+model Usuario {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  email String
+  tipo_usuario usuario_tipo
+  created_at DateTime @db.Timestamp()
+  updated_at DateTime? @db.Timestamp()
+  deleted_at DateTime? @db.Timestamp()
+
+  trabajador Trabajador?
+  cliente Cliente_Digital?
+}
+
+model Trabajador {
+  id BigInt @id @db.BigInt
+  nombre String
+  apellido String
+  password_hash String
+  rol trabajador_rol
+  activo Boolean @default(false)
+
+  usuario Usuario @relation(fields: [id], references: [id])
+}
+
+model Cliente_Digital {
+  id BigInt @id @db.BigInt
+  nombre_completo String
+  auth_provider cliente_auth_provider
+  provider_user_id String @unique
+
+  usuario Usuario @relation(fields: [id], references: [id])
+  pedidos Pedido[]
+}
+
+model Auditoria_Sistema {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_usuario BigInt @db.BigInt
+  accion auditoria_accion
+  tabla_afectada String
+  row_id String
+  direccion_ip String
+  user_agent String @db.Text
+  fecha_hora DateTime @db.Timestamp()
+}
+
+model Productos_Proveedor {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  nombre String
+  descripcion String?
+  SKU String?
+  id_insumo BigInt @db.BigInt
+  id_insumo_medida BigInt @db.BigInt
+  factor_conversion Decimal @db.Decimal
+  id_proveedor BigInt @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  precio_referencial Decimal? @db.Decimal(10, 2)
+
+  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  proveedor Proveedor @relation(fields: [id_proveedor], references: [id])
+  detalles_orden Detalles_Orden_Abasto[]
+  detalles_arribo Detalles_Arribo_Abasto[]
+}
+
+model Insumo {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  nombre String
+  stock_ideal Decimal @db.Decimal
+  stock_min Decimal @db.Decimal
+  id_unidad_base BigInt @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  unidad_base Unidad_Medida @relation(fields: [id_unidad_base], references: [id])
+  medidas Insumo_Medidas[]
+  ingredientes Ingredientes_Plato[]
+  productos Productos_Proveedor[]
+  detalles_distribucion Detalles_Distribucion_Abasto[]
+  stocks Stock_Almacen[]
+}
+
+model Almacen {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  nombre String
+  ubicacion String
+  descripcion String
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  ingredientes Ingredientes_Plato[]
+  detalles_distribucion Detalles_Distribucion_Abasto[]
+  stocks Stock_Almacen[]
+}
+
+model Proveedor {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  ruc String @unique
+  razon_social String
+  estado String
+  condicion String
+  direccion String
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  contactos Proveedor_Contacto[]
+  ordenes Orden_Abasto[]
+  productos Productos_Proveedor[]
+}
+
+model Proveedor_Contacto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_proveedor BigInt @db.BigInt
+  nombre_contacto String
+  tipo proveedor_contacto_tipo
+  contacto String
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+  deleted_at DateTime? @db.Timestamp()
+  deleted_by BigInt? @db.BigInt
+
+  proveedor Proveedor @relation(fields: [id_proveedor], references: [id])
+}
+
+model Unidad_Medida {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  factor_canonico Decimal @db.Decimal
+  nombre String
+  abreviatura String
+  tipo unidad_tipo
+
+  insumos Insumo[]
+}
+
+model Insumo_Medidas {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  nombre String
+  abreviatura String
+  factor_a_base Decimal @db.Decimal
+  id_insumo BigInt @db.BigInt
+
+  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  ingredientes Ingredientes_Plato[]
+  productos Productos_Proveedor[]
+  detalles_distribucion Detalles_Distribucion_Abasto[]
+  movimientos Movimiento_Almacen[]
+  mermas Merma_Insumo[]
+}
+
+model Orden_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  estado orden_estado @default(emitida)
+  emitida_a BigInt @db.BigInt
+  fecha_hora_emision DateTime @db.Timestamp()
+  emitida_por BigInt @db.BigInt
+  fecha_hora_cancelacion DateTime? @db.Timestamp()
+  cancelada_por BigInt? @db.BigInt
+  motivo_cancelacion String? @db.Text
+  id_factura BigInt? @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+  updated_at DateTime? @db.Timestamp()
+  updated_by BigInt? @db.BigInt
+
+  proveedor Proveedor @relation(fields: [emitida_a], references: [id])
+  factura Factura? @relation(fields: [id_factura], references: [id])
+  detalles Detalles_Orden_Abasto[]
+  arribos Arribo_Abasto[]
+}
+
+model Detalles_Orden_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  cantidad Int @db.SmallInt
+  id_producto_proveedor BigInt @db.BigInt
+  id_orden_abasto BigInt @db.BigInt
+
+  producto Productos_Proveedor @relation(fields: [id_producto_proveedor], references: [id])
+  orden Orden_Abasto @relation(fields: [id_orden_abasto], references: [id])
+}
+
+model Arribo_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  url_acta_conformidad String @db.Text
+  recibido_por BigInt @db.BigInt
+  fecha_hora_recepcion DateTime @db.Timestamp()
+  id_orden_abasto BigInt @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+
+  orden Orden_Abasto @relation(fields: [id_orden_abasto], references: [id])
+  detalles Detalles_Arribo_Abasto[]
+  distribuciones Distribucion_Abasto[]
+}
+
+model Detalles_Arribo_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  cantidad Int @db.SmallInt
+  id_producto_proveedor BigInt @db.BigInt
+  id_arribo_abasto BigInt @db.BigInt
+
+  producto Productos_Proveedor @relation(fields: [id_producto_proveedor], references: [id])
+  arribo Arribo_Abasto @relation(fields: [id_arribo_abasto], references: [id])
+}
+
+model Factura {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  url_factura_xml String @db.Text
+  url_factura_pdf String? @db.Text
+
+  ordenes Orden_Abasto[]
+  pagos Pagos_Factura[]
+}
+
+model Pagos_Factura {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  monto Decimal @db.Decimal(10, 2)
+  url_comprobante String? @db.Text
+  id_factura BigInt @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt @db.BigInt
+
+  factura Factura @relation(fields: [id_factura], references: [id])
+}
+
+model Distribucion_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  codigo String @unique
+  fecha_hora_distribucion DateTime @db.Timestamp()
+  created_at DateTime @db.Timestamp()
+  id_arribo_abasto BigInt @db.BigInt
+
+  arribo Arribo_Abasto @relation(fields: [id_arribo_abasto], references: [id])
+  detalles Detalles_Distribucion_Abasto[]
+}
+
+model Detalles_Distribucion_Abasto {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_insumo BigInt @db.BigInt
+  id_insumo_medida BigInt @db.BigInt
+  cantidad Decimal? @db.Decimal
+  id_almacen BigInt @db.BigInt
+  id_distribucion_abasto BigInt @db.BigInt
+
+  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  almacen Almacen @relation(fields: [id_almacen], references: [id])
+  distribucion Distribucion_Abasto @relation(fields: [id_distribucion_abasto], references: [id])
+  movimiento Movimiento_Almacen?
+}
+
+model Stock_Almacen {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  id_almacen BigInt @db.BigInt
+  id_insumo BigInt @db.BigInt
+  stock_actual Decimal @db.Decimal
+  updated_at DateTime @db.Timestamp()
+
+  almacen Almacen @relation(fields: [id_almacen], references: [id])
+  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  movimientos Movimiento_Almacen[]
+  mermas Merma_Insumo[]
+
+  @@unique([id_almacen, id_insumo])
+}
+
+model Movimiento_Almacen {
+  id Int @id @default(autoincrement())
+  id_stock_almacen BigInt @db.BigInt
+  tipo movimiento_almacen_tipo
+  cantidad Decimal @db.Decimal
+  saldo_anterior Decimal @db.Decimal
+  saldo_nuevo Decimal @db.Decimal
+  id_insumo_medida BigInt @db.BigInt
+  id_detalle_distribucion BigInt? @unique @db.BigInt
+  id_comanda BigInt? @db.BigInt
+  id_merma BigInt? @unique @db.BigInt
+  created_at DateTime @db.Timestamp()
+  created_by BigInt? @db.BigInt
+
+  stock Stock_Almacen @relation(fields: [id_stock_almacen], references: [id])
+  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  detalle_distribucion Detalles_Distribucion_Abasto? @relation(fields: [id_detalle_distribucion], references: [id])
+  comanda Comanda? @relation(fields: [id_comanda], references: [id])
+  merma Merma_Insumo? @relation(fields: [id_merma], references: [id])
+}
+
+model Merma_Insumo {
+  id BigInt @id @default(autoincrement())
+  id_stock_almacen BigInt @db.BigInt
+  cantidad Decimal @db.Decimal
+  id_insumo_medida BigInt @db.BigInt
+  descripcion String
+  reportado_por BigInt @db.BigInt
+  revisado_por BigInt? @db.BigInt
+  estado reporte_merma_estado
+  created_at DateTime @db.Timestamp()
+
+  stock Stock_Almacen @relation(fields: [id_stock_almacen], references: [id])
+  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  movimiento Movimiento_Almacen?
+  evidencias Evidencia_Merma[]
+}
+
+model Evidencia_Merma {
+  id BigInt @id @default(autoincrement()) @db.BigInt
+  url_evidencia String @db.Text
+  id_merma BigInt @db.BigInt
+
+  merma Merma_Insumo @relation(fields: [id_merma], references: [id])
 }
