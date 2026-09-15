@@ -10,6 +10,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      expandVariables: true
     }),
     InventoryModule,
     PrismaModule,

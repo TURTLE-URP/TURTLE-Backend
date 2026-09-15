@@ -8,34 +8,49 @@ services:
       - backend_network
     environment:
       PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_HOST: ${DATABASE_HOST}
+      DATABASE_PORT: ${DATABASE_PORT}
     depends_on:
       postgres-db:
         condition: service_healthy
     develop:
       watch:
+        # Sincronizacion para cualquier codigo de src. Ignoramos el codigo cliente generado de prisma ya que este
+        # es propio por sistema operativo. Ademas que se obtiene por medio de observaciones en ./prisma
         - path: ./src
           action: sync
           target: /usr/src/app/src
+          ignore:
+            - src/generated/
+        # Sincronizacion y reinicio del contenedor cada vez que se actualiza el schema de prisma por una migracion
+        # Esto para que el contenedor tenga todas las migraciones a su alcance y tambien el codigo mas actualizado
+        # del Prisma Client.
+        - path: ./prisma
+          action: sync+restart
+          target: /usr/src/app/prisma
+        # recostruccion total del contenedor cuando se agrega y/o eliminan dependencias
         - action: rebuild
           path: package.json
   postgres-db:
     image: postgres:18-alpine
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "pg_isready", "-d", "${POSTGRES_DB}", "-h", "localhost" ]
+      test: [ "CMD", "pg_isready", "-d", "${DATABASE_NAME}", "-h", "localhost" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 15s
     environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-      PGUSER: ${POSTGRES_USER}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${DATABASE_DEFAULT_SUPERUSER}
+      POSTGRES_PASSWORD: ${DATABASE_SUPERUSER_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+      PGUSER: ${DATABASE_DEFAULT_SUPERUSER}
+      PGPASSWORD: ${DATABASE_SUPERUSER_PASSWORD}
     ports:
-      - ${HOST_POSTGRES_PORT}:5432
+      - ${DATABASE_PORT}:5432
     volumes:
       - pg-data:/var/lib/postgresql/18/docker
       - ./database/scripts/initialization:/docker-entrypoint-initdb.d
