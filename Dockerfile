@@ -15,7 +15,8 @@ RUN npm cache clean --force
 # ==========================================
 FROM base AS development
 COPY . .
-RUN npx prisma generate
+# En el script dev del package json utilizamos 'npx prisma generate' de forma que cada watch del contenedor
+# pueda tener siempre el cliente de prisma actualizado
 ENTRYPOINT [ "npm", "run", "start:dev" ]
 
 # ==========================================
@@ -23,6 +24,7 @@ ENTRYPOINT [ "npm", "run", "start:dev" ]
 # ==========================================
 FROM base AS builder
 COPY . .
+# Ejecutamos comando generate para que el contenedor ya tenga el codigo necesario para usar el cliente de Prisma
 RUN npx prisma generate
 # Compile TypeScript to native JavaScript
 RUN npm run build
