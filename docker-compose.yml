@@ -3,7 +3,7 @@ services:
     build:
       context: .
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get({hostname:'localhost',port:process.env.PORT||3000,path:'/health',timeout:5000},r=>process.exit(r.statusCode==200?0:1)).on('error',()=>process.exit(1))"]
+      test: ["CMD", "node", "healthcheck.js"]
       interval: 15s
       timeout: 5s
       retries: 3
