@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaClient } from '@src/generated/prisma/client';
+import { Prisma, PrismaClient, PrismaPromise } from '@src/generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
-import { PrismaPromise, TransactionIsolationLevel } from '@src/generated/prisma/internal/prismaNamespace';
 @Injectable()
 export class PrismaService extends PrismaClient {
   constructor(private readonly configService: ConfigService) {
@@ -31,7 +30,7 @@ export class PrismaService extends PrismaClient {
     options?: {
     maxWait?: number;
     timeout?: number;
-    isolationLevel?: TransactionIsolationLevel
+    isolationLevel?: Prisma.TransactionIsolationLevel
   }
   ): Promise<T[]> {
     return this.$transaction(arg,options);  // Prisma handles transaction
