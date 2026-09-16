@@ -4,7 +4,9 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
+  OnModuleInit,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -28,7 +30,8 @@ type ApiIntiDniResponse = {
 };
 
 @Injectable()
-export class DniService {
+export class DniService implements OnModuleInit {
+  private readonly logger = new Logger(DniService.name);
   private readonly baseUrl: string;
   private readonly apiKey: string | undefined;
 
@@ -40,6 +43,14 @@ export class DniService {
       this.configService.get<string>('APIINTI_BASE_URL') ??
       'https://app.apiinti.dev/api/v1';
     this.apiKey = this.configService.get<string>('APIINTI_API_KEY');
+  }
+
+  onModuleInit() {
+    if (!this.apiKey?.trim()) {
+      this.logger.warn('DNI disabled: APIINTI_API_KEY is not configured');
+      return;
+    }
+    this.logger.log(`DNI ready via ApiInti (${this.baseUrl})`);
   }
 
   async lookup(numero: string): Promise<DniLookup> {
