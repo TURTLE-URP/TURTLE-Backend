@@ -2,6 +2,8 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
+  OnModuleInit,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -11,7 +13,7 @@ import {
   UploadApiResponse,
   v2 as CloudinaryV2,
 } from 'cloudinary';
-import { CLOUDINARY } from './cloudinary.constants';
+import { CLOUDINARY, CLOUDINARY_ENV_KEYS } from './cloudinary.constants';
 import { UploadedMedia } from './entities/uploaded-media.entity';
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -23,11 +25,27 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 @Injectable()
-export class CloudinaryService {
+export class CloudinaryService implements OnModuleInit {
+  private readonly logger = new Logger(CloudinaryService.name);
+
+  private missingCredentials(): string[] {
+    return CLOUDINARY_ENV_KEYS.filter(
+      (key) => !this.configService.get<string>(key)?.trim(),
+    );
+  }
   constructor(
     @Inject(CLOUDINARY) private readonly cloudinary: typeof CloudinaryV2,
     @Inject(ConfigService) private readonly configService: ConfigService,
   ) {}
+
+  async onModuleInit() {
+    const missing = this.missingCredentials();
+    if (missing.length > 0) {
+      this.logger.warn(`Cloudinary disabled: missing ${missing.join(', ')}`);
+      return;
+    }
+    this.logger.log('Cloudinary ready');
+  }
 
   async uploadImage(
     file: Express.Multer.File,
@@ -61,7 +79,9 @@ export class CloudinaryService {
     }
   }
 
-  async deleteImage(publicId: string): Promise<{ publicId: string; result: string }> {
+  async deleteImage(
+    publicId: string,
+  ): Promise<{ publicId: string; result: string }> {
     this.assertCredentialsConfigured();
 
     const id = publicId?.trim();
@@ -97,11 +117,8 @@ export class CloudinaryService {
   }
 
   private assertCredentialsConfigured(): void {
-    const cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME');
-    const apiKey = this.configService.get<string>('CLOUDINARY_API_KEY');
-    const apiSecret = this.configService.get<string>('CLOUDINARY_API_SECRET');
-
-    if (!cloudName || !apiKey || !apiSecret) {
+    const missing = this.missingCredentials(); // <-- reutiliza el helper
+    if (missing.length > 0) {
       throw new UnauthorizedException(
         'Cloudinary credentials are not configured',
       );
