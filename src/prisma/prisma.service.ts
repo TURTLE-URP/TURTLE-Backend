@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient, PrismaPromise } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class PrismaService extends PrismaClient {
+  private readonly logger = new Logger(PrismaService.name)
   constructor(private readonly configService: ConfigService) {
     const adapter = new PrismaPg({
       connectionString: configService.get<string>('DATABASE_URL'),
@@ -14,13 +15,13 @@ export class PrismaService extends PrismaClient {
   // When module starts, connect to database
   async onModuleInit() {
     await this.$connect();  // Open database connection
-    console.log('✅ Database connected');  // Confirmation
+    this.logger.log('✅ Database connected');  // Confirmation
   }
 
   // When module stops, disconnect from database
   async onModuleDestroy() {
     await this.$disconnect();  // Close database connection
-    console.log('❌ Database disconnected');
+    this.logger.log('❌ Database disconnected');
   }
 
   // Helper method for database transactions
