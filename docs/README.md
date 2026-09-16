@@ -62,15 +62,11 @@ src/
 ├── app.controller.ts          # GET /
 ├── app.service.ts             # Servicio raíz
 ├── prisma/                    # Conexión a BD (global)
-├── health/                    # Health checks
-├── integrations/              # Proveedores externos
-│   ├── ruc/                   # OpenRUC (SUNAT funcional)
-│   ├── dni/                   # ApiInti (RENIEC funcional)
-│   └── cloudinary/            # Upload de imágenes
-└── inventory/                 # Módulo de inventario
-    ├── warehouse/             # Almacenes (CRUD funcional)
-    ├── supplies/              # Insumos (scaffolded)
-    └── stock/                 # Stock (scaffolded)
+├── health/                    # Health checks (Terminus)
+└── integrations/              # Proveedores externos
+    ├── ruc/                   # OpenRUC (SUNAT)
+    ├── dni/                   # ApiInti (RENIEC)
+    └── cloudinary/            # Upload de imágenes
 ```
 
 ---

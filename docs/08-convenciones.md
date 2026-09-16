@@ -8,9 +8,7 @@ El código fuente no lleva comentarios. La documentación vive en `docs/`.
 
 ### `@Inject()` explícito en constructores
 
-Usamos `tsx watch` para desarrollo (hot-reload confiable). `tsx` usa **esbuild**, que **no soporta `emitDecoratorMetadata`**.
-
-Esto significa que la inyección automática por tipo **no funciona**. Debes usar `@Inject()` explícito:
+Convención del proyecto: declarar las dependencias con `@Inject(...)` en el constructor.
 
 ```typescript
 // ✅ Correcto
@@ -25,17 +23,14 @@ export class MiServicio {
 }
 ```
 
-```typescript
-// ❌ Incorrecto — no funciona con tsx
-constructor(
-  private readonly otro: OtroServicio,
-) {}
-```
+No es estrictamente obligatorio: `tsc` emite `emitDecoratorMetadata` y Nest resuelve la inyección por tipo de forma automática. Se usa `@Inject()` para hacer la inyección **explícita** y a prueba de herramientas que no emiten metadatos (esbuild/`tsx`, algunos runners de tests).
 
-### `reflect-metadata` en main.ts
+### `reflect-metadata`
+
+`@nestjs/core` carga `reflect-metadata` en tiempo de ejecución. Si usas herramientas que lo requieren explícitamente (tests, `ts-node`), agrégalo como primera línea:
 
 ```typescript
-// main.ts — primera línea
+// main.ts — primera línea (cuando sea necesario)
 import 'reflect-metadata';
 ```
 
@@ -50,28 +45,38 @@ import { PrismaService } from '@src/prisma/prisma.service';
 // Equivalente a: import from './prisma/prisma.service'
 ```
 
+`tsc` resuelve el alias a la ruta relativa correspondiente al compilar, así que también funciona en producción.
+
 ---
 
 ## Troubleshooting
 
 ### EADDRINUSE al reiniciar
 
-**Problema**: `nest start --watch` no mata el proceso anterior y el puerto queda ocupado.
+**Problema**: el proceso anterior no se mató y el puerto queda ocupado.
 
-**Solución**: Usar `tsx watch` en lugar de `nest start --watch`. El `Dockerfile` ya usa `tsx watch` en la etapa `development`.
+**Solución**: reiniciar el servicio del contenedor:
+
+```bash
+docker compose restart turtle-backend
+```
+
+Si corres en el host, mata el proceso que ocupa el puerto antes de relanzar.
 
 ### Hot-reload no funciona en slim
 
-**Problema**: La imagen `node:slim` no tiene los binarios necesarios para el file watcher.
+**Problema**: las imágenes `node:slim` no tienen los binarios necesarios para el file watcher.
 
-**Solución**: Usar la imagen `node:${version}` completa (no slim). El Dockerfile ya usa `node:24.15.0`.
+**Solución**: usar la imagen `node:${version}` completa (no slim). El Dockerfile ya usa `node:24.15.0`.
 
-### Prisma no encuentra el schema
+### Prisma no encuentra el schema o falta el cliente generado
 
 ```bash
-npx prisma db pull   # Sincroniza schema de BD → schema.prisma
-npx prisma generate  # Genera el cliente TypeScript
+npx prisma migrate dev   # Aplica migraciones pendientes
+npx prisma generate      # Genera el cliente TypeScript en src/generated/prisma
 ```
+
+El directorio `src/generated/prisma` está en `.gitignore`: se regenera y nunca se commitеa.
 
 ### Error de conexión a PostgreSQL
 
@@ -82,9 +87,12 @@ docker compose ps
 # Verificar DATABASE_URL
 docker compose exec turtle-backend printenv DATABASE_URL
 
-# La URL debe usar "postgres-db" como host, no "localhost"
-# ✅ correcto: postgresql://user:pass@postgres-db:5432/turtledb
-# ❌ incorrecto: postgresql://user:pass@localhost:5432/turtledb
+# Dentro de Docker la URL debe usar "postgres-db" como host, no "localhost"
+# ✅ correcto:   postgresql://prisma_dev_user:prisma@postgres-db:5432/turtle
+# ❌ incorrecto: postgresql://prisma_dev_user:prisma@localhost:5432/turtle
+
+# Fuera de Docker, usa "localhost"
+# ✅ local:      postgresql://prisma_dev_user:prisma@localhost:5432/turtle
 ```
 
 ### `@nestjs/config` no encuentra `.env`

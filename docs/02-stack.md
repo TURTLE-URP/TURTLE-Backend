@@ -16,7 +16,7 @@
 
 ## Dependencias clave
 
-### Producción (17)
+### Producción (14)
 
 ```json
 "@nestjs/common"       // Decoradores, guards, pipes
@@ -24,28 +24,34 @@
 "@nestjs/core"         // IoC container, módulos
 "@nestjs/platform-express" // Servidor HTTP Express
 "@nestjs/terminus"     // Health checks
-"@nestjs/axios"        // HTTP client para health checks
+"@nestjs/axios"        // HTTP client (integraciones + health)
 "@prisma/client"       // Cliente generado por Prisma
 "@prisma/adapter-pg"   // Adaptador PostgreSQL
 "pg"                   // Driver PostgreSQL
+"axios"                // HTTP client (integraciones)
+"cloudinary"           // SDK de Cloudinary
+"multer"               // Upload de archivos (multipart)
 "reflect-metadata"     // Decoradores en tiempo de ejecución
 "rxjs"                 // Programación reactiva
 ```
 
-### Desarrollo (22)
+### Desarrollo (26)
 
 ```json
-"@nestjs/cli"          // Generar módulos, controladores
-"@nestjs/schematics"   // Plantillas de código
-"@nestjs/testing"      // Test utilities
-"typescript"           // Compilador TS
-"ts-jest"              // Jest + TypeScript
-"ts-node"              // Ejecutar TS directamente
-"ts-loader"            // Webpack + TS (para nest build)
-"prisma"               // CLI de Prisma
-"eslint + prettier"    // Linter y formateador
-"jest + supertest"     // Tests unitarios y E2E
-```
+"@nestjs/cli"            // Generar módulos, controladores
+"@nestjs/schematics"     // Plantillas de código
+"@nestjs/testing"        // Test utilities
+"@eslint/eslintrc"       // Configuración de ESLint
+"@eslint/js"             // Reglas base de ESLint
+"typescript"             // Compilador TS
+"typescript-eslint"      // ESLint + TypeScript
+"ts-jest"                // Jest + TypeScript
+"ts-node"                // Ejecutar TS directamente
+"ts-loader"              // TypeScript + Webpack
+"tsconfig-paths"         // Resolución de path aliases
+"prisma"                 // CLI de Prisma
+"jest + supertest"       // Tests unitarios y E2E
+"eslint + prettier"      // Linter y formateador
 
 ---
 

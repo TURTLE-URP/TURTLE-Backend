@@ -9,33 +9,17 @@ Cada desarrollador tiene un SO distinto. Docker empaqueta **la misma versión de
 ## Estructura de archivos
 
 ```
-├── Dockerfile                       # 4 etapas
-├── docker-compose.yml               # Base: volúmenes, networks, healthcheck
-├── docker-compose.development.yml   # Desarrollo: watch, hot-reload, pgAdmin
-└── docker-compose.production.yml    # Producción: sin watch, restart always
+├── Dockerfile                       # 4 etapas (multi-stage)
+├── docker-compose.yml               # Base: build del backend, volúmenes, networks, healthcheck
+├── docker-compose.development.yml   # Desarrollo: watch/hot-reload, postgres, pgAdmin (perfil dbClient)
+└── .dockerignore
 ```
+
+> **Nota**: ya no existe `docker-compose.production.yml`. El `Dockerfile` tiene un stage de producción listo (`node dist/main.js`), pero el proyecto actualmente está pensado para desarrollo.
 
 ---
 
-## Elige tu opción
-
-```mermaid
-flowchart LR
-    A["¿Qué quieres\nhacer?"] --> B["Desarrollar"]
-    A --> C["Probar\nproducción"]
-    B --> D["docker compose development\nup --build --watch"]
-    C --> E["docker compose production\nup --build -d"]
-
-    style A fill:#30363d,stroke:#8b949e,color:#fff
-    style B fill:#1f6feb,stroke:#58a6ff,color:#fff
-    style C fill:#9e6a03,stroke:#d29922,color:#fff
-    style D fill:#238636,stroke:#3fb950,color:#fff
-    style E fill:#238636,stroke:#3fb950,color:#fff
-```
-
----
-
-## Opción 1: Desarrollo
+## Opción: Desarrollo
 
 ```bash
 # Sin pgAdmin
@@ -54,35 +38,15 @@ docker compose \
 
 ### Hot-reload
 
-El flag `--watch` de Compose sincroniza cambios:
+El flag `--watch` de Compose activa `develop.watch`:
 
 | Cambio en | Acción |
 |---|---|
-| `./src/` | Sync automático al contenedor |
+| `./src/` | Sync automático al contenedor (ignora `src/generated/`) |
+| `./prisma/` | Sync + reinicio del contenedor (para migraciones) |
 | `package.json` | Rebuild de la imagen |
 
-Dentro del contenedor, `tsx watch` reinicia el servidor sin EADDRINUSE.
-
----
-
-## Opción 2: Producción
-
-```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.production.yml \
-  up --build -d
-```
-
-### Diferencia con desarrollo
-
-| Aspecto | Desarrollo | Producción |
-|---|---|---|
-| Imagen | Multi-stage `development` | Multi-stage `production` |
-| Entrypoint | `npm run start:dev` | `node dist/main.js` |
-| Watch | ✅ Sí | ❌ No |
-| Restart | manual | `always` |
-| pgAdmin | Opcional (perfil) | ❌ No |
+Dentro del contenedor, el entrypoint es `npm run start:dev` = `npx prisma generate && nest start --watch` (regenera el cliente Prisma y reinicia el servidor).
 
 ---
 
@@ -90,9 +54,15 @@ docker compose \
 
 | Servicio | Imagen | Puerto | Healthcheck |
 |---|---|---|---|
-| `turtle-backend` | Personalizada | `${PORT}` | `GET /health` c/15s |
-| `postgres-db` | `postgres:18-alpine` | `${HOST_POSTGRES_PORT}` | `pg_isready` c/10s |
+| `turtle-backend` | Personalizada | `${PORT}` | `GET /health` vía `healthcheck.js` c/15s |
+| `postgres-db` | `postgres:18-alpine` | `${DATABASE_PORT}` | `pg_isready` c/10s |
 | `pgadmin` | `dpage/pgadmin4:9.14.0` | `${HOST_PGADMIN_PORT}` | `/misc/ping` c/10s |
+
+| Servicio | Cómo iniciarlo |
+|---|---|
+| `turtle-backend` | Siempre (junto con el override de desarrollo) |
+| `postgres-db` | Siempre (dependencia de `turtle-backend`) |
+| `pgadmin` | Solo con `--profile dbClient` |
 
 ---
 
@@ -101,9 +71,17 @@ docker compose \
 | Etapa | Propósito |
 |---|---|
 | `base` | `npm ci` + limpieza de caché |
-| `development` | Copia fuente, entrypoint `tsx watch` |
+| `development` | Copia la fuente; entrypoint `npm run start:dev` (`prisma generate` + `nest start --watch`) |
 | `builder` | `prisma generate` + `npm run build` + `npm prune --production` |
-| `production` | Solo `dist/` + `node_modules` desde builder |
+| `production` | Solo `dist/` + `node_modules` desde builder; entrypoint `node dist/main.js` |
+
+---
+
+## Variables de entorno
+
+El backend recibe `PORT` y `DATABASE_URL` desde el compose.
+
+> ⚠️ **Pendiente**: las claves de integraciones (`CLOUDINARY_*`, `APIINTI_API_KEY`, `OPENRUC_BASE_URL`) **no se inyectan actualmente** al contenedor (el `.dockerignore` excluye `.env.*`). Para usarlas dentro de Docker hay que añadirlas al servicio `turtle-backend` (p. ej. `env_file: .env`).
 
 ---
 
@@ -115,6 +93,9 @@ docker compose logs -f turtle-backend
 
 # Shell dentro del contenedor
 docker compose exec turtle-backend sh
+
+# Aplicar migraciones desde dentro del contenedor
+docker compose exec turtle-backend npx prisma migrate deploy
 
 # Estado de salud
 docker ps --filter name=turtle-backend

@@ -48,58 +48,12 @@ curl http://localhost:3000/health
 }
 ```
 
+> ⚠️ El indicador `nestjs-docs` hace ping a docs.nestjs.com, por lo que el health check requiere acceso a internet.
+
 | Indicador | Verifica |
 |---|---|
 | `nestjs-docs` | HTTP ping a docs.nestjs.com |
 | `database` | Prisma ping a PostgreSQL |
-
----
-
-## `GET /warehouse`
-
-**Lista todos los almacenes.** Opcionalmente filtra por nombre y página.
-
-```bash
-curl http://localhost:3000/warehouse
-curl "http://localhost:3000/warehouse?name=principal&page=1"
-```
-
-| Parámetro | Tipo | Obligatorio | Descripción |
-|---|---|---|---|
-| `name` | string | No | Filtro por nombre |
-| `page` | number | No | Número de página |
-
-**Respuesta:**
-```json
-[
-  {
-    "storage_room_id": 1,
-    "name": "Cámara Fría",
-    "description": "Almacenamiento refrigerado",
-    "location": "Sótano"
-  }
-]
-```
-
----
-
-## `POST /warehouse`
-
-**Crea un nuevo almacén.** Endpoint parcial (retorna string fijo).
-
-```bash
-curl -X POST http://localhost:3000/warehouse \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Nuevo","address":"Dirección","description":"Descripción"}'
-```
-
-| Campo | Tipo | Obligatorio |
-|---|---|---|
-| `name` | string | Sí |
-| `address` | string | Sí |
-| `description` | string | Sí |
-
-> ⚠️ Endpoint en construcción — implementación real pendiente.
 
 ---
 
