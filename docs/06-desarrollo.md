@@ -6,14 +6,16 @@ El backend corre **nativo** en tu máquina. Docker solo aporta la base de datos 
 
 ```bash
 nvm use                  # Node 24.15.0
-npm install              # Instalar dependencias
+npm install              # Instala dependencias y genera el cliente Prisma (postinstall)
 
 # Levantar la base de datos
 docker compose up -d
 
-# Migraciones y cliente Prisma
+# Copiar y ajustar variables de entorno (ver 05 — Entorno local)
+cp .env.template .env
+
+# Migraciones (también regenera el cliente Prisma)
 npx prisma migrate dev
-npx prisma generate
 ```
 
 > Desde este momento todo (compilar, tests, debugger, IDE) corre en tu host.
@@ -46,8 +48,8 @@ npm run test
 
 | Comando | Qué hace |
 |---|---|
-| `npm run start:dev` | Hot-reload: `nest start --watch` (el cliente se genera en `npm install`) |
-| `npm run build` | Compila a `dist/` |
+| `npm run start:dev` | Hot-reload: `nest start --watch` |
+| `npm run build` | Compila a `dist/` (el `prebuild` regenera el cliente Prisma antes) |
 | `npm run start:prod` | Corre la versión compilada |
 | `npm run lint` | ESLint con autocorrección |
 | `npm run format` | Prettier |
@@ -69,6 +71,8 @@ npx prisma migrate dev --name "descripcion_del_cambio"
 git add prisma/schema.prisma prisma/migrations
 git commit -m "feat(db): describir el cambio"
 ```
+
+> El cliente `@prisma/client` se regenera solo con `npm install` (postinstall), `npm run build` (prebuild) y `npx prisma migrate dev`. Solo corre `npx prisma generate` a mano si los tipos están desactualizados.
 
 > Los scripts de `database/scripts/initialization/` solo se ejecutan al crear el volumen por primera vez. Si cambias usuarios/permisos, borra el volumen con `down -v` para re-ejecutarlos.
 

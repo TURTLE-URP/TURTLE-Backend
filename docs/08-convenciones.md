@@ -97,6 +97,19 @@ El `ConfigModule` lee desde la raíz del proyecto. Los comandos se corren desde 
 ls .env
 ```
 
+### `EACCES: permission denied` al compilar (`dist/` con dueño `root`)
+
+**Problema**: `nest build` (con `deleteOutDir`) falla borrando `dist/` porque esa carpeta quedó con dueño `root` — típico tras correr `sudo npm run build` o un contenedor Docker como root sobre un volumen montado. El build **no** requiere sudo.
+
+**Solución** (una sola vez):
+
+```bash
+sudo rm -rf dist
+npm run build   # desde aquí dist/ vuelve a ser tuya, sin sudo
+```
+
+Para que no vuelva a pasar: trabaja siempre sin `sudo` y, si dockerizas el backend, no montes `./dist` como volumen (o fija `user: "${UID:-1000}:${GID:-1000}"` en el compose).
+
 ---
 
 [&larr; Anterior: API](./07-api.md) | [Siguiente: Integraciones DNI / RUC &rarr;](./09-integraciones-dni-ruc.md)

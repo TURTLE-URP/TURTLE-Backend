@@ -52,7 +52,7 @@
 "prisma"                 // CLI de Prisma
 "jest + supertest"       // Tests unitarios y E2E
 "eslint + prettier"      // Linter y formateador
-
+```
 ---
 
 ## ¿Por qué estas tecnologías?
