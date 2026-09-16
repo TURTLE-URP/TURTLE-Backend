@@ -70,10 +70,10 @@ npm run start:dev
 
 ```bash
 npx prisma migrate dev   # Aplica migraciones pendientes
-npx prisma generate      # Genera el cliente TypeScript en src/generated/prisma
+npx prisma generate      # Genera el cliente @prisma/client en node_modules
 ```
 
-El directorio `src/generated/prisma` está en `.gitignore`: se regenera y nunca se commitеa.
+El cliente generado vive en `node_modules/@prisma/client`: se regenera con `npm install` (postinstall) o `npx prisma generate` y nunca se commitea.
 
 ### Error de conexión a PostgreSQL
 

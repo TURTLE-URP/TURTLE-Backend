@@ -209,7 +209,7 @@ The schema is defined in `prisma/schema.prisma` and migrations live in `prisma/m
 | Proveedores y abastecimiento (11) | `Proveedor`, `Proveedor_Contacto`, `Productos_Proveedor`, `Factura`, `Pagos_Factura`, `Orden_Abasto`, `Detalles_Orden_Abasto`, `Arribo_Abasto`, `Detalles_Arribo_Abasto`, `Distribucion_Abasto`, `Detalles_Distribucion_Abasto` |
 | Usuarios y auditoría (4) | `Usuario`, `Trabajador`, `Cliente_Digital`, `Auditoria_Sistema` |
 
-The Prisma client is generated from `prisma/schema.prisma` into `src/generated/prisma` (not committed). Detalles en [docs/04](./docs/04-base-de-datos.md).
+The Prisma client is generated from `prisma/schema.prisma` into `node_modules/@prisma/client` (default output, not committed). Detalles en [docs/04](./docs/04-base-de-datos.md).
 
 ---
 
@@ -218,7 +218,7 @@ The Prisma client is generated from `prisma/schema.prisma` into `src/generated/p
 | Command | Description |
 |---|---|
 | `npm run start` | Start the app |
-| `npm run start:dev` | Start in watch mode (regenera el cliente Prisma) |
+| `npm run start:dev` | Start in watch mode |
 | `npm run start:prod` | Start production build (`node dist/main`) |
 | `npm run build` | Compile the project |
 | `npm run test` | Run unit tests |
@@ -262,7 +262,6 @@ TURTLE-Backend/
 │   ├── prisma/
 │   │   ├── prisma.module.ts
 │   │   └── prisma.service.ts
-│   └── generated/prisma/          # Auto-generated Prisma client (gitignored)
 ├── prisma/
 │   ├── schema.prisma              # Prisma schema (source of truth)
 │   ├── seed.ts                    # Seed data (pendiente)

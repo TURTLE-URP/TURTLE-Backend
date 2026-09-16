@@ -46,7 +46,7 @@ npm run test
 
 | Comando | Qué hace |
 |---|---|
-| `npm run start:dev` | Hot-reload: `prisma generate` + `nest start --watch` |
+| `npm run start:dev` | Hot-reload: `nest start --watch` (el cliente se genera en `npm install`) |
 | `npm run build` | Compila a `dist/` |
 | `npm run start:prod` | Corre la versión compilada |
 | `npm run lint` | ESLint con autocorrección |
