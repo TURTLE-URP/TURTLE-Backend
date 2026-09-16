@@ -18,7 +18,7 @@ npx prisma generate      # Generar cliente Prisma
 flowchart LR
     A["¿Cómo quieres\ntrabajar?"] --> B["Con Docker\n(recomendado)"]
     A --> C["Sin Docker\n(solo backend)"]
-    B --> D["docker compose development\nup --build --watch"]
+    B --> D["docker compose\nup --build --watch"]
     C --> E["Necesitas PostgreSQL\ncorriendo aparte"]
     E --> F["npm run start:dev"]
 
@@ -50,12 +50,10 @@ flowchart LR
 
 ```bash
 # 1. Levantar servicios
-docker compose -f docker-compose.yml \
-  -f docker-compose.development.yml \
-  up --build --watch
+docker compose up --build --watch
 
 # 2. Aplicar migraciones (la primera vez)
-docker compose exec turtle-backend npx prisma migrate deploy
+docker compose exec backend npx prisma migrate deploy
 
 # 3. Editar código en ./src/
 #    → Docker sync copia los cambios al contenedor
@@ -66,7 +64,7 @@ curl http://localhost:3000/
 curl http://localhost:3000/health
 
 # 5. Tests dentro del contenedor
-docker compose exec turtle-backend npm run test
+docker compose exec backend npm run test
 ```
 
 ---
@@ -75,9 +73,7 @@ docker compose exec turtle-backend npm run test
 
 ```bash
 # 1. Levantar solo la base de datos
-docker compose -f docker-compose.yml \
-  -f docker-compose.development.yml \
-  up -d postgres-db
+docker compose up -d postgres-db
 
 # 2. Apuntar DATABASE_URL al host local
 #    En .env: postgresql://prisma_dev_user:prisma@localhost:5432/turtle
@@ -127,7 +123,7 @@ npm run test:cov    # Con cobertura
 npm run test:e2e    # End-to-end
 
 # En Docker:
-docker compose exec turtle-backend npm run test
+docker compose exec backend npm run test
 ```
 
 ---

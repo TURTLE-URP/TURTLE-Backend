@@ -58,7 +58,7 @@ import { PrismaService } from '@src/prisma/prisma.service';
 **Solución**: reiniciar el servicio del contenedor:
 
 ```bash
-docker compose restart turtle-backend
+docker compose restart backend
 ```
 
 Si corres en el host, mata el proceso que ocupa el puerto antes de relanzar.
@@ -85,7 +85,7 @@ El directorio `src/generated/prisma` está en `.gitignore`: se regenera y nunca 
 docker compose ps
 
 # Verificar DATABASE_URL
-docker compose exec turtle-backend printenv DATABASE_URL
+docker compose exec backend printenv DATABASE_URL
 
 # Dentro de Docker la URL debe usar "postgres-db" como host, no "localhost"
 # ✅ correcto:   postgresql://prisma_dev_user:prisma@postgres-db:5432/turtle

@@ -61,7 +61,6 @@ The name **TURTLE** reflects the philosophy: *reliable, steady, and built to las
 | [@prisma/adapter-pg](https://www.prisma.io/docs/orm/overview/databases/postgresql) | Prisma driver adapter for `pg` |
 | [PostgreSQL](https://www.postgresql.org/) 18 | Database |
 | [Docker](https://www.docker.com/) / [Compose](https://docs.docker.com/compose/) | Local infrastructure |
-| [pgAdmin](https://www.pgadmin.org/) | Database administration UI |
 | [Jest](https://jestjs.io/) v30 | Testing framework |
 
 ---
@@ -120,19 +119,15 @@ cp .env.template .env
 ### 3. Start the Backend + Database (Docker, recommended)
 
 ```bash
-docker compose \
-  -f docker-compose.yml \
-  -f docker-compose.development.yml \
-  up --build --watch
+docker compose up --build --watch
 ```
 
-> PostgreSQL escucha en `${DATABASE_PORT}` (por defecto `5432`).  
-> Opcionalmente, pgAdmin con: `--profile dbClient`.
+> PostgreSQL escucha en `${DATABASE_PORT}` (por defecto `5432`).
 
 ### 4. Apply Migrations
 
 ```bash
-docker compose exec turtle-backend npx prisma migrate deploy
+docker compose exec backend npx prisma migrate deploy
 ```
 
 ### 5. Run the Server
@@ -150,7 +145,7 @@ npm run start:prod
 
 The API will be available at [http://localhost:3000](http://localhost:3000), health check at [http://localhost:3000/health](http://localhost:3000/health).
 
-> **¿Desarrollo sin Docker?** Levanta solo la BD (`docker compose -f docker-compose.yml -f docker-compose.development.yml up -d postgres-db`), apunta `DATABASE_URL` a `localhost` y sigue los pasos 4–5. Detalles en [docs/06](./docs/06-desarrollo.md).
+> **¿Desarrollo sin Docker?** Levanta solo la BD (`docker compose up -d postgres-db`), apunta `DATABASE_URL` a `localhost` y sigue los pasos 4–5. Detalles en [docs/06](./docs/06-desarrollo.md).
 
 ---
 
@@ -164,9 +159,6 @@ The API will be available at [http://localhost:3000](http://localhost:3000), hea
 | `DATABASE_SUPERUSER_PASSWORD` | *(auto-generated)* | Superuser password |
 | `DATABASE_NAME` | `turtle` | Database name |
 | `DATABASE_PORT` | `5432` | Host port for PostgreSQL |
-| `HOST_PGADMIN_PORT` | `80` | pgAdmin web UI port |
-| `PGADMIN_DEFAULT_EMAIL` | `admin@admin.com` | pgAdmin login email |
-| `PGADMIN_DEFAULT_PASSWORD` | `admin_password` | pgAdmin login password |
 | `CLOUDINARY_CLOUD_NAME` | — | Cloudinary cloud name |
 | `CLOUDINARY_API_KEY` | — | Cloudinary API key |
 | `CLOUDINARY_API_SECRET` | — | Cloudinary API secret |
@@ -281,8 +273,7 @@ TURTLE-Backend/
 ├── database/
 │   └── scripts/
 │       └── initialization/        # PostgreSQL init SQL (users + privileges)
-├── docker-compose.yml             # Base (build, networks, healthcheck)
-├── docker-compose.development.yml # Dev: watch, postgres, pgAdmin
+├── compose.yaml                   # Compose único: backend + PostgreSQL
 ├── Dockerfile                     # Multi-stage (base/dev/builder/production)
 ├── .env.template                  # Environment template
 ├── docs/                          # Guía detallada (01-10)

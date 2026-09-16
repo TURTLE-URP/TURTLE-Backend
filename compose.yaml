@@ -1,14 +1,20 @@
 services:
-  turtle-backend:
+  backend:
     build:
+      context: .
       target: development
+    env_file:
+      - .env
     ports:
       - "${PORT}:${PORT}"
     networks:
       - backend_network
-    environment:
-      PORT: ${PORT}
-      DATABASE_URL: ${DATABASE_URL}
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.js"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     depends_on:
       postgres-db:
         condition: service_healthy
@@ -48,7 +54,7 @@ services:
     ports:
       - ${DATABASE_PORT}:5432
     volumes:
-      - pg-data:/var/lib/postgresql/18/docker
+      - pg-data:/var/lib/postgresql
       - ./database/scripts/initialization:/docker-entrypoint-initdb.d
     deploy:
       resources:
@@ -58,30 +64,8 @@ services:
           memory: 256m
     networks:
       - backend_network
-      - dba_network
-  pgadmin:
-    image: dpage/pgadmin4:9.14.0
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 10s
-    profiles:
-      - dbClient
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-    ports:
-      - ${HOST_PGADMIN_PORT}:80
-    volumes:
-      - pg-admin-data:/var/lib/pgadmin
-    deploy:
-      resources:
-        limits:
-          memory: 256m
-        reservations:
-          memory: 128m
-    networks:
-      - dba_network
+volumes:
+  pg-data:
+networks:
+  backend_network:
+    driver: "bridge"
