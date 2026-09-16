@@ -1,5 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiServiceUnavailableResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import {
   HealthCheck,
   HealthCheckService,
   MemoryHealthIndicator,
@@ -10,6 +16,7 @@ import { PrismaService } from '@src/prisma/prisma.service';
 const DATABASE_PING_TIMEOUT_MS = 2000;
 const MEMORY_HEAP_THRESHOLD_BYTES = 300 * 1024 * 1024;
 
+@ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -22,6 +29,9 @@ export class HealthController {
   // Readiness: ¿puede atender tráfico? Exige PostgreSQL.
   @Get()
   @HealthCheck()
+  @ApiOperation({ summary: 'Readiness: exige PostgreSQL' })
+  @ApiOkResponse({ description: 'Database is up' })
+  @ApiServiceUnavailableResponse({ description: 'Database is down' })
   readiness() {
     return this.health.check([
       () =>
@@ -34,6 +44,8 @@ export class HealthController {
   // Liveness: ¿sigue vivo el proceso? Sin I/O externo.
   @Get('live')
   @HealthCheck()
+  @ApiOperation({ summary: 'Liveness: solo memoria, sin I/O' })
+  @ApiOkResponse({ description: 'Process is alive' })
   liveness() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', MEMORY_HEAP_THRESHOLD_BYTES),

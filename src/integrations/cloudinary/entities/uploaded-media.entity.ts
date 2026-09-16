@@ -1,12 +1,35 @@
+import { ApiProperty } from '@nestjs/swagger';
+
 export class UploadedMedia {
+  @ApiProperty({ example: 'turtle/abc123' })
   publicId: string;
+
+  @ApiProperty({
+    example: 'http://res.cloudinary.com/demo/image/upload/turtle/abc123.png',
+  })
   url: string;
+
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/image/upload/turtle/abc123.png',
+  })
   secureUrl: string;
+
+  @ApiProperty({ example: 'png', nullable: true })
   format: string | null;
+
+  @ApiProperty({ example: 245678, nullable: true })
   bytes: number | null;
+
+  @ApiProperty({ example: 800, nullable: true })
   width: number | null;
+
+  @ApiProperty({ example: 600, nullable: true })
   height: number | null;
+
+  @ApiProperty({ example: 'image' })
   resourceType: string;
+
+  @ApiProperty({ example: 'turtle', nullable: true })
   folder: string | null;
 
   constructor(

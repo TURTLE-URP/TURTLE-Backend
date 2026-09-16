@@ -2,6 +2,11 @@
 
 ## Convenciones del código
 
+### DTO valida lo que entra, Entity documenta lo que sale
+
+* **`dto/`** — inputs (`@Body()`, `@Query()`): llevan validadores de `class-validator` y se chequean con el `ValidationPipe` global.
+* **`entities/`** — outputs construidos en el servicio: llevan `@ApiProperty()` para Swagger, jamás validadores.
+
 ### Sin comentarios
 
 El código fuente no lleva comentarios. La documentación vive en `docs/`.
