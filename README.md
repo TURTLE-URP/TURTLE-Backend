@@ -1,4 +1,3 @@
-
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://img.icons8.com/fluency/96/turtle.png">
@@ -9,7 +8,7 @@
 <h1 align="center">🐢 TURTLE Backend</h1>
 
 <p align="center">
-  <em>Restaurant Inventory & Operations Management API</em>
+  <em>API de gestión para restaurantes: inventario, proveedores, menú y pedidos.</em>
 </p>
 
 <p align="center">
@@ -24,296 +23,102 @@
 
 ---
 
-## 📋 Table of Contents
+## 📋 Contenido
 
-- [About](#-about)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Getting Started](#-getting-started)
-- [Environment Variables](#-environment-variables)
-- [API Endpoints](#-api-endpoints)
-- [Database Schema](#-database-schema)
+- [Acerca de](#-acerca-de)
+- [Inicio rápido](#-inicio-rápido)
 - [Scripts](#-scripts)
-- [Testing](#-testing)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
+- [Documentación](#-documentación)
+- [Contribuir](#-contribuir)
 
 ---
 
-## 🧩 About
+## 🧩 Acerca de
 
-**TURTLE** is a backend service designed for restaurant management — handling inventory, supplies, stock, warehouse locations, suppliers, menu items, and customer orders.
+**TURTLE** es el backend del sistema de gestión para restaurantes: centraliza inventario de insumos, proveedores, menú y pedidos en una API REST construida con **NestJS 11 + Prisma 7 + PostgreSQL 18**.
 
-Built with **NestJS** and **Prisma** on **PostgreSQL**, the API provides a clean modular foundation that can scale from a single restaurant to a multi-branch operation.
-
-The name **TURTLE** reflects the philosophy: *reliable, steady, and built to last*.
+> 📚 La guía detallada (stack, arquitectura, BD, entorno, API, convenciones) vive en [docs/](docs/README.md).
 
 ---
 
-## ⚙️ Tech Stack
+## 🚀 Inicio rápido
 
-| Technology | Purpose |
-|---|---|
-| [NestJS](https://nestjs.com/) v11 | Application framework |
-| [TypeScript](https://www.typescriptlang.org/) v5 | Language |
-| [Prisma](https://www.prisma.io/) v7 | ORM & database client |
-| [PostgreSQL](https://www.postgresql.org/) 18 | Database |
-| [Docker](https://www.docker.com/) / [Compose](https://docs.docker.com/compose/) | Local infrastructure |
-| [pgAdmin](https://www.pgadmin.org/) 4 | Database administration UI |
-| [Jest](https://jestjs.io/) v30 | Testing framework |
+### Requisitos
 
----
-
-## 🏗️ Architecture
-
-```
-┌─────────────────────────────────────────────────┐
-│                   NestJS App                     │
-│  ┌───────────┐  ┌───────────┐  ┌───────────┐   │
-│  │ Inventory  │  │  Prisma   │  │  Config   │   │
-│  │  Module    │  │  Module   │  │  Module   │   │
-│  └─────┬─────┘  └─────┬─────┘  └───────────┘   │
-│        │              │                          │
-│  ┌─────┴──────────────┴─────┐                    │
-│  │     WarehouseModule      │                    │
-│  │  ┌──────────────────┐    │                    │
-│  │  │ WarehouseController│   │                    │
-│  │  ├──────────────────┤    │                    │
-│  │  │ WarehouseService  │    │                    │
-│  │  └──────────────────┘    │                    │
-│  └──────────────────────────┘                    │
-│  ┌───────────┐  ┌───────────┐                    │
-│  │ Supplies  │  │   Stock   │                    │
-│  │  Module   │  │  Module   │  ← Scaffolded      │
-│  └───────────┘  └───────────┘                    │
-└──────────────────────┬──────────────────────────┘
-                       │
-┌──────────────────────┴──────────────────────────┐
-│             PostgreSQL (via Prisma)              │
-│  ┌──────────┐ ┌──────────┐ ┌────────────────┐   │
-│  │warehouses│ │menu_items│ │internal_supplies│   │
-│  ├──────────┤ ├──────────┤ ├────────────────┤   │
-│  │  ...     │ │  orders  │ │   suppliers    │   │
-│  └──────────┘ └──────────┘ └────────────────┘   │
-└──────────────────────────────────────────────────┘
-```
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-- **Node.js** ≥ 22
+- **Node.js** `24.15.0` (`nvm use`)
 - **npm** ≥ 10
-- **Docker** & **Docker Compose** (for PostgreSQL)
+- **Docker** + **Docker Compose** (solo para PostgreSQL)
 
-### 1. Clone & Install
+### Pasos
 
 ```bash
+# 1. Clonar e instalar (el postinstall genera el cliente Prisma)
 git clone <repo-url>
 cd TURTLE-Backend
+nvm use
 npm install
-```
 
-### 2. Configure Environment
-
-Copy the template and adjust if needed:
-
-```bash
+# 2. Configurar entorno
 cp .env.template .env
-```
 
-### 3. Start the Database
-
-```bash
+# 3. Levantar la base de datos
 docker compose up -d
-```
 
-> Starts PostgreSQL on port `5432` (configurable via `.env`).  
-> Optionally, launch pgAdmin with: `docker compose --profile dbClient up -d`
+# 4. Aplicar migraciones
+npx prisma migrate dev
 
-### 4. Push Schema & Generate Client
-
-```bash
-npx prisma db push
-npx prisma generate
-```
-
-### 5. Run the Server
-
-```bash
-# development
-npm run start
-
-# watch mode (auto-reload)
+# 5. Correr el servidor (nativo, con hot-reload)
 npm run start:dev
-
-# production
-npm run start:prod
 ```
 
-The API will be available at [http://localhost:3000](http://localhost:3000).
+La API queda en [http://localhost:3000](http://localhost:3000), readiness en [http://localhost:3000/health](http://localhost:3000/health) y liveness en [http://localhost:3000/health/live](http://localhost:3000/health/live).
 
----
-
-## 🌱 Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `DATABASE_URL` | `postgresql://prisma_user:prisma_password@localhost:5432/turtledb` | Prisma datasource URL |
-| `HOST_POSTGRES_PORT` | `5432` | Host port for PostgreSQL |
-| `POSTGRES_USER` | `postgres` | PostgreSQL superuser |
-| `POSTGRES_PASSWORD` | *(auto-generated)* | Superuser password |
-| `POSTGRES_DB` | `turtledb` | Database name |
-| `HOST_PGADMIN_PORT` | `80` | pgAdmin web UI port |
-| `PGADMIN_DEFAULT_EMAIL` | `admin@admin.com` | pgAdmin login email |
-| `PGADMIN_DEFAULT_PASSWORD` | `admin_password` | pgAdmin login password |
-| `PORT` | `3000` | Application HTTP port |
-
----
-
-## 📡 API Endpoints
-
-| Method | Path | Description | Status |
-|---|---|---|---|
-| `GET` | `/` | Health check / Hello World | ✅ |
-| `GET` | `/warehouse` | List warehouses (_query: `name`, `page`_) | ✅ |
-| `POST` | `/warehouse` | Create a warehouse | ✅ |
-| — | `/supplies/*` | Supplies CRUD _(coming soon)_ | 🚧 |
-| — | `/stock/*` | Stock management _(coming soon)_ | 🚧 |
-
-### Example: Create a Warehouse
-
-```bash
-curl -X POST http://localhost:3000/warehouse \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Main Storage",
-    "address": "Av. Principal 123",
-    "description": "Downtown warehouse"
-  }'
-```
-
-### Example: List Warehouses
-
-```bash
-curl "http://localhost:3000/warehouse?name=Main&page=1"
-```
-
----
-
-## 🗄️ Database Schema
-
-The full schema defines **17 tables** covering the restaurant domain:
-
-```
-restaurant_table        → Dining tables & QR tokens
-menu_items              → Menu with pricing, types (combo/single)
-menu_item_tags          → Tag taxonomy for menu items
-menu_item_ingredients   → BOM linking menu items to supplies
-internal_supplies       → Inventory items with stock tracking
-internal_supply_tags    → Tag taxonomy for supplies
-suppliers               → Vendor registry (RUC, company)
-supplier_catalog_items  → Vendor product catalog & pricing
-units_of_measurement    → UOM catalog
-storage_rooms           → Warehouse storage locations
-internal_supplies_location → Stock per storage room
-customer_order          → Orders with payments, statuses
-customer_order_items    → Order line items
-combo_description       → Combo item composition
-```
-
-The Prisma client is generated from `prisma/schema.prisma`.
+> Detalle de variables y Docker: [docs/05-entorno-local.md](docs/05-entorno-local.md).
+> Flujo diario de desarrollo: [docs/06-desarrollo.md](docs/06-desarrollo.md).
 
 ---
 
 ## 📜 Scripts
 
-| Command | Description |
+| Comando | Descripción |
 |---|---|
-| `npm run start` | Start the app |
-| `npm run start:dev` | Start in watch mode |
-| `npm run start:prod` | Start production build |
-| `npm run build` | Compile the project |
-| `npm run test` | Run unit tests |
-| `npm run test:e2e` | Run end-to-end tests |
-| `npm run test:cov` | Run tests with coverage |
-| `npm run lint` | Lint and auto-fix |
-| `npm run format` | Format code with Prettier |
+| `npm run start:dev` | Desarrollo con hot-reload |
+| `npm run build` | Compila a `dist/` (antes regenera el cliente Prisma) |
+| `npm run start:prod` | Corre la versión compilada (`node dist/main`) |
+| `npm run test` | Tests unitarios |
+| `npm run test:e2e` | Tests end-to-end |
+| `npm run test:cov` | Tests con cobertura |
+| `npm run lint` | ESLint con autocorrección |
+| `npm run format` | Formato con Prettier |
 
 ---
 
-## 🧪 Testing
+## 📚 Documentación
 
-```bash
-# unit tests
-npm run test
-
-# e2e tests (requires running DB)
-npm run test:e2e
-
-# with coverage
-npm run test:cov
-```
-
----
-
-## 📁 Project Structure
-
-```
-TURTLE-Backend/
-├── src/
-│   ├── main.ts                    # Entry point
-│   ├── app.module.ts              # Root module
-│   ├── app.controller.ts          # Root controller
-│   ├── app.service.ts             # Root service
-│   ├── config/                    # Configuration
-│   ├── inventory/
-│   │   ├── inventory.module.ts
-│   │   ├── warehouse/             # ✅ Implemented
-│   │   │   ├── warehouse.controller.ts
-│   │   │   ├── warehouse.service.ts
-│   │   │   ├── dto/
-│   │   │   └── entities/
-│   │   ├── supplies/              # 🚧 Scaffolded
-│   │   └── stock/                 # 🚧 Scaffolded
-│   ├── prisma/
-│   │   ├── prisma.module.ts
-│   │   └── prisma.service.ts
-│   └── generated/prisma/          # Auto-generated Prisma client
-├── prisma/
-│   ├── schema.prisma              # Prisma schema
-│   └── config.ts                  # Prisma config
-├── database/
-│   └── scripts/
-│       ├── initialization/        # Docker init SQL
-│       ├── schema/                # Full schema DDL
-│       └── seed/                  # Seed data
-├── docker-compose.yml             # PostgreSQL + pgAdmin
-├── .env.template                  # Environment template
-├── tsconfig.json
-├── nest-cli.json
-├── eslint.config.mjs
-└── package.json
-```
+| # | Tema | Ir |
+|---|------|----|
+| 01 | Introducción | [Abrir](docs/01-introduccion.md) |
+| 02 | Stack tecnológico | [Abrir](docs/02-stack.md) |
+| 03 | Arquitectura de módulos | [Abrir](docs/03-arquitectura.md) |
+| 04 | Base de datos | [Abrir](docs/04-base-de-datos.md) |
+| 05 | Entorno local | [Abrir](docs/05-entorno-local.md) |
+| 06 | Desarrollo local | [Abrir](docs/06-desarrollo.md) |
+| 07 | API endpoints | [Abrir](docs/07-api.md) |
+| 08 | Convenciones y troubleshooting | [Abrir](docs/08-convenciones.md) |
+| 09 | Integraciones DNI / RUC | [Abrir](docs/09-integraciones-dni-ruc.md) |
+| 10 | Cloudinary (media) | [Abrir](docs/10-cloudinary.md) |
 
 ---
 
-## 🤝 Contributing
+## 🤝 Contribuir
 
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feat/my-feature`
-3. Commit your changes: `git commit -m "feat: add my feature"`
-4. Push: `git push origin feat/my-feature`
-5. Open a Pull Request.
+1. Crea una rama: `git checkout -b feat/mi-feature`.
+2. Commitea: `git commit -m "feat: agregar mi feature"`.
+3. Push y abre un Pull Request.
 
-### Guidelines
-
-- Follow the existing code style (Prettier + ESLint).
-- Write tests for new functionality.
-- Keep modules loosely coupled.
-- Use the Prisma service for all database access.
+- Sigue el estilo existente (Prettier + ESLint) y las [convenciones](docs/08-convenciones.md).
+- Escribe tests para la funcionalidad nueva.
+- Todo acceso a BD pasa por `PrismaService`.
 
 ---
 

@@ -16,7 +16,7 @@
 
 ## Dependencias clave
 
-### Producción (17)
+### Producción (14)
 
 ```json
 "@nestjs/common"       // Decoradores, guards, pipes
@@ -24,29 +24,35 @@
 "@nestjs/core"         // IoC container, módulos
 "@nestjs/platform-express" // Servidor HTTP Express
 "@nestjs/terminus"     // Health checks
-"@nestjs/axios"        // HTTP client para health checks
+"@nestjs/axios"        // HTTP client (integraciones + health)
 "@prisma/client"       // Cliente generado por Prisma
 "@prisma/adapter-pg"   // Adaptador PostgreSQL
 "pg"                   // Driver PostgreSQL
+"axios"                // HTTP client (integraciones)
+"cloudinary"           // SDK de Cloudinary
+"multer"               // Upload de archivos (multipart)
 "reflect-metadata"     // Decoradores en tiempo de ejecución
 "rxjs"                 // Programación reactiva
 ```
 
-### Desarrollo (22)
+### Desarrollo (26)
 
 ```json
-"@nestjs/cli"          // Generar módulos, controladores
-"@nestjs/schematics"   // Plantillas de código
-"@nestjs/testing"      // Test utilities
-"typescript"           // Compilador TS
-"ts-jest"              // Jest + TypeScript
-"ts-node"              // Ejecutar TS directamente
-"ts-loader"            // Webpack + TS (para nest build)
-"prisma"               // CLI de Prisma
-"eslint + prettier"    // Linter y formateador
-"jest + supertest"     // Tests unitarios y E2E
+"@nestjs/cli"            // Generar módulos, controladores
+"@nestjs/schematics"     // Plantillas de código
+"@nestjs/testing"        // Test utilities
+"@eslint/eslintrc"       // Configuración de ESLint
+"@eslint/js"             // Reglas base de ESLint
+"typescript"             // Compilador TS
+"typescript-eslint"      // ESLint + TypeScript
+"ts-jest"                // Jest + TypeScript
+"ts-node"                // Ejecutar TS directamente
+"ts-loader"              // TypeScript + Webpack
+"tsconfig-paths"         // Resolución de path aliases
+"prisma"                 // CLI de Prisma
+"jest + supertest"       // Tests unitarios y E2E
+"eslint + prettier"      // Linter y formateador
 ```
-
 ---
 
 ## ¿Por qué estas tecnologías?
@@ -70,6 +76,27 @@ El proyecto requiere **Node.js 24.15.0** exactamente (definido en `.nvmrc` y `pa
 nvm use        # Activar la versión correcta
 node --version # → v24.15.0
 ```
+
+---
+
+## Política de versiones `@nestjs/*`
+
+En el ecosistema Nest, el **major de los paquetes `@nestjs/*` acompaña al major del framework**: con `@nestjs/common` en `11.x`, todo paquete `@nestjs/*` nuevo debe instalarse en su línea `11.x` (ej. `@nestjs/swagger@^11`, `@nestjs/terminus@^11`).
+
+Instalar sin fijar el major trae la última versión, que puede pedir otro Nest y romper la instalación con `ERESOLVE` (ver [troubleshooting](./08-convenciones.md)). Antes de agregar un paquete `@nestjs/*`:
+
+```bash
+# 1. Ver qué majors existen
+npm view @nestjs/swagger versions --json | tail -5
+
+# 2. Confirmar que sus peers piden nuestro Nest (11.x)
+npm view @nestjs/swagger@11 peerDependencies
+
+# 3. Instalar fijando el major compatible
+npm install --save @nestjs/swagger@^11
+```
+
+Fuente oficial de equivalencias: los [releases en GitHub](https://github.com/nestjs/swagger/releases) de cada paquete documentan con qué Nest va cada major (ej. swagger v11 → Nest 11, v12 → Nest 12). Nunca uses `--force` ni `--legacy-peer-deps` para tapar el conflicto.
 
 ---
 

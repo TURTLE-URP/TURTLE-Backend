@@ -17,8 +17,10 @@ Sin un sistema, todo se lleva en papel, Excel o en la cabeza del cocinero. TURTL
 
 | Funcionalidad | Estado |
 |---|---|
-| CRUD de almacenes (`storage_rooms`) | ✅ Listo |
 | Health checks (API + BD) | ✅ Listo |
+| Consulta de RUC (OpenRUC) | ✅ Listo |
+| Consulta de DNI (ApiInti) | ✅ Listo |
+| Subida y borrado de media (Cloudinary) | ✅ Listo |
 | CRUD de insumos | ⏳ Pendiente |
 | Control de stock | ⏳ Pendiente |
 | Gestión de proveedores | ⏳ Pendiente |
@@ -41,9 +43,9 @@ flowchart TB
 ```
 
 - **API REST** con NestJS 11
-- **Base de datos** PostgreSQL 18
+- **Base de datos** PostgreSQL 18 (levantada con Docker, solo la BD)
 - **ORM** Prisma 7 con `adapter-pg`
-- **Contenedores** Docker con multi-stage build
+- **Backend nativo**: `npm run start:dev` con hot-reload en tu máquina
 
 ---
 

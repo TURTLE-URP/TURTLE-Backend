@@ -1,105 +1,27 @@
 # 07 — API endpoints
 
-## `GET /`
-
-**Respuesta básica del servidor.**
-
-```bash
-curl http://localhost:3000/
-```
-
-```
-Hello World
-```
-
-| Código | Descripción |
-|---|---|
-| 200 | Servidor funcionando |
+La referencia viva es **Swagger UI en `http://localhost:3000/api`** (spec en `/api-json`): se genera desde decoradores + plugin y siempre refleja el código. Lo de abajo es el resumen conceptual.
 
 ---
 
-## `GET /health`
+## Resumen por tag
 
-**Health check del sistema.** Usa `@nestjs/terminus` para verificar conectividad.
-
-```bash
-curl http://localhost:3000/health
-```
-
-**Respuesta exitosa (200):**
-```json
-{
-  "status": "ok",
-  "info": {
-    "nestjs-docs": { "status": "up" },
-    "database": { "status": "up" }
-  }
-}
-```
-
-**Respuesta con fallo (503):**
-```json
-{
-  "status": "error",
-  "info": {},
-  "error": {
-    "database": { "status": "down", "message": "... " }
-  }
-}
-```
-
-| Indicador | Verifica |
-|---|---|
-| `nestjs-docs` | HTTP ping a docs.nestjs.com |
-| `database` | Prisma ping a PostgreSQL |
-
----
-
-## `GET /warehouse`
-
-**Lista todos los almacenes.** Opcionalmente filtra por nombre y página.
-
-```bash
-curl http://localhost:3000/warehouse
-curl "http://localhost:3000/warehouse?name=principal&page=1"
-```
-
-| Parámetro | Tipo | Obligatorio | Descripción |
-|---|---|---|---|
-| `name` | string | No | Filtro por nombre |
-| `page` | number | No | Número de página |
-
-**Respuesta:**
-```json
-[
-  {
-    "storage_room_id": 1,
-    "name": "Cámara Fría",
-    "description": "Almacenamiento refrigerado",
-    "location": "Sótano"
-  }
-]
-```
-
----
-
-## `POST /warehouse`
-
-**Crea un nuevo almacén.** Endpoint parcial (retorna string fijo).
-
-```bash
-curl -X POST http://localhost:3000/warehouse \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Nuevo","address":"Dirección","description":"Descripción"}'
-```
-
-| Campo | Tipo | Obligatorio |
+| Tag | Endpoints | Detalle |
 |---|---|---|
-| `name` | string | Sí |
-| `address` | string | Sí |
-| `description` | string | Sí |
+| `root` | `GET /` | Ping básico |
+| `health` | `GET /health`, `GET /health/live` | Ver abajo |
+| `ruc` | `GET /ruc/:numero` | RUC 11 dígitos, sin API key. Ver [09](./09-integraciones-dni-ruc.md) |
+| `dni` | `GET /dni/:numero` | DNI 8 dígitos, requiere `APIINTI_API_KEY`. Ver [09](./09-integraciones-dni-ruc.md) |
+| `media` | `POST /media/upload`, `DELETE /media` | Multipart (máx. 5MB) y borrado por `publicId`. Ver [10](./10-cloudinary.md) |
 
-> ⚠️ Endpoint en construcción — implementación real pendiente.
+---
+
+## Health: dos niveles
+
+* **`GET /health` (readiness)** — ¿puede atender tráfico? Exige PostgreSQL (`SELECT 1`, timeout 2 s). 503 con BD caída.
+* **`GET /health/live` (liveness)** — ¿sigue vivo el proceso? Solo heap en memoria, sin I/O. Para probes que deciden reinicios.
+
+> Prueba útil: con `docker compose stop postgres-db`, `/health` debe dar 503 mientras `/health/live` sigue en 200 — eso confirma "mi API vive, mi BD no".
 
 ---
 
@@ -108,9 +30,11 @@ curl -X POST http://localhost:3000/warehouse \
 | Concepto | Valor |
 |---|---|
 | Base URL | `http://localhost:3000` |
-| Content-Type | `application/json` |
+| Docs interactivas | `http://localhost:3000/api` |
+| Content-Type | `application/json` (multipart en `POST /media/upload`) |
 | Códigos | REST estándar (200, 201, 400, 404, 503) |
 | Errores | `{ statusCode, message, error }` |
+| Validación | `ValidationPipe` global (`whitelist` + `transform`): bodies fuera de contrato dan 400 |
 
 ---
 

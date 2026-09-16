@@ -6,20 +6,20 @@
 graph TD
     AppModule --> ConfigModule
     AppModule --> PrismaModule
-    AppModule --> InventoryModule
     AppModule --> HealthModule
-    InventoryModule --> WarehouseModule
-    InventoryModule --> SuppliesModule
-    InventoryModule --> StockModule
+    AppModule --> IntegrationsModule
+    IntegrationsModule --> RucModule
+    IntegrationsModule --> DniModule
+    IntegrationsModule --> CloudinaryModule
 
     style AppModule fill:#8957e5,stroke:#bc8cff,color:#fff
     style ConfigModule fill:#1f6feb,stroke:#58a6ff,color:#fff
     style PrismaModule fill:#238636,stroke:#3fb950,color:#fff
     style HealthModule fill:#9e6a03,stroke:#d29922,color:#fff
-    style InventoryModule fill:#d29922,stroke:#f0c000,color:#fff
-    style WarehouseModule fill:#58a6ff,stroke:#79c0ff,color:#fff
-    style SuppliesModule fill:#58a6ff,stroke:#79c0ff,color:#fff
-    style StockModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style IntegrationsModule fill:#d29922,stroke:#f0c000,color:#fff
+    style RucModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style DniModule fill:#58a6ff,stroke:#79c0ff,color:#fff
+    style CloudinaryModule fill:#58a6ff,stroke:#79c0ff,color:#fff
 ```
 
 ---
@@ -30,9 +30,9 @@ graph TD
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    InventoryModule,
     PrismaModule,
     HealthModule,
+    IntegrationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
@@ -67,15 +67,17 @@ Expone `GET /health` con dos indicadores:
 
 ---
 
-## InventoryModule (agrupador)
+## IntegrationsModule (agrupador)
 
-Agrupa tres submódulos:
+Consultas externas de identidad (sin persistencia):
 
-| Submódulo | Estado | Descripción |
+| Submódulo | Proveedor | Endpoint |
 |---|---|---|
-| `WarehouseModule` | ✅ Funcional | CRUD de `storage_rooms` |
-| `SuppliesModule` | ⏳ Scaffolded | Gestión de insumos |
-| `StockModule` | ⏳ Scaffolded | Control de stock |
+| `RucModule` | OpenRUC | `GET /ruc/:numero` |
+| `DniModule` | ApiInti | `GET /dni/:numero` |
+| `CloudinaryModule` | Cloudinary | `POST /media/upload`, `DELETE /media` |
+
+Detalle en [09 — DNI/RUC](./09-integraciones-dni-ruc.md) y [10 — Cloudinary](./10-cloudinary.md).
 
 ---
 
@@ -83,13 +85,11 @@ Agrupa tres submódulos:
 
 ```mermaid
 sequenceDiagram
-    Client->>Controller: GET /warehouse
-    Controller->>Service: findAll()
-    Service->>PrismaService: storage_rooms.findMany()
-    PrismaService->>PostgreSQL: SELECT * FROM storage_rooms
-    PostgreSQL-->>PrismaService: rows
-    PrismaService-->>Service: datos tipados
-    Service-->>Controller: array de almacenes
+    Client->>Controller: GET /ruc/20100047218
+    Controller->>Service: lookup('20100047218')
+    Service->>OpenRUC: GET https://openruc.com/api/ruc/20100047218
+    OpenRUC-->>Service: JSON
+    Service-->>Controller: RucLookup
     Controller-->>Client: JSON response
 ```
 

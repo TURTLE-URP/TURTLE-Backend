@@ -1,30 +1,47 @@
 # 06 — Desarrollo local
 
+El backend corre **nativo** en tu máquina. Docker solo aporta la base de datos (ver [05 — Entorno local](./05-entorno-local.md)).
+
 ## Setup inicial
 
 ```bash
 nvm use                  # Node 24.15.0
-npm install              # Instalar dependencias
-npx prisma generate      # Generar cliente Prisma
+npm install              # Instala dependencias y genera el cliente Prisma (postinstall)
+
+# Levantar la base de datos
+docker compose up -d
+
+# Copiar y ajustar variables de entorno (ver 05 — Entorno local)
+cp .env.template .env
+
+# Migraciones y cliente (en v7 van por separado)
+npx prisma migrate dev
+npx prisma generate
+npm run db:seed          # datos demo (idempotente)
 ```
+
+> Desde este momento todo (compilar, tests, debugger, IDE) corre en tu host.
 
 ---
 
-## Elige tu opción
+## Flujo diario
 
-```mermaid
-flowchart LR
-    A["¿Cómo quieres\ntrabajar?"] --> B["Con Docker\n(recomendado)"]
-    A --> C["Sin Docker\n(solo backend)"]
-    B --> D["docker compose development\nup --build --watch"]
-    C --> E["Necesitas PostgreSQL\ncorriendo aparte"]
-    E --> F["npm run start:dev"]
+```bash
+# 1. Levantar la BD (si no está arriba)
+docker compose up -d
 
-    style A fill:#30363d,stroke:#8b949e,color:#fff
-    style B fill:#1f6feb,stroke:#58a6ff,color:#fff
-    style C fill:#9e6a03,stroke:#d29922,color:#fff
-    style D fill:#238636,stroke:#3fb950,color:#fff
-    style F fill:#238636,stroke:#3fb950,color:#fff
+# 2. Iniciar el backend con hot-reload
+npm run start:dev
+
+# 3. Editar código en ./src/
+#    → nest start --watch recompila y reinicia
+
+# 4. Verificar
+curl http://localhost:3000/
+curl http://localhost:3000/health
+
+# 5. Tests
+npm run test
 ```
 
 ---
@@ -33,8 +50,8 @@ flowchart LR
 
 | Comando | Qué hace |
 |---|---|
-| `npm run start:dev` | Hot-reload con `tsx watch` |
-| `npm run build` | Compila a `dist/` |
+| `npm run start:dev` | Hot-reload: `nest start --watch` |
+| `npm run build` | Compila a `dist/` (el `prebuild` regenera el cliente Prisma antes) |
 | `npm run start:prod` | Corre la versión compilada |
 | `npm run lint` | ESLint con autocorrección |
 | `npm run format` | Prettier |
@@ -44,25 +61,22 @@ flowchart LR
 
 ---
 
-## Flujo diario con Docker
+## Cambios en la base de datos
 
 ```bash
-# 1. Levantar servicios
-docker compose -f docker-compose.yml \
-  -f docker-compose.development.yml \
-  up --build --watch
+# 1. Editar prisma/schema.prisma
 
-# 2. Editar código en ./src/
-#    → Docker sync copia cambios al contenedor
-#    → tsx watch reinicia el servidor
+# 2. Crear y aplicar la migración
+npx prisma migrate dev --name "descripcion_del_cambio"
 
-# 3. Verificar
-curl http://localhost:3000/
-curl http://localhost:3000/health
-
-# 4. Tests dentro del contenedor
-docker compose exec turtle-backend npm run test
+# 3. Commitear schema + migración
+git add prisma/schema.prisma prisma/migrations
+git commit -m "feat(db): describir el cambio"
 ```
+
+> El cliente `@prisma/client` se genera con `npm install` (postinstall), `npm run build` (prebuild) o `npx prisma generate` explícito. En Prisma v7, `migrate dev` **no** regenera el cliente ni corre el seed: van por separado.
+
+> Los scripts de `database/scripts/initialization/` solo se ejecutan al crear el volumen por primera vez. Si cambias usuarios/permisos, borra el volumen con `down -v` para re-ejecutarlos.
 
 ---
 
@@ -70,27 +84,7 @@ docker compose exec turtle-backend npm run test
 
 ```bash
 npm install algun-paquete
-# Docker detecta el cambio en package.json
-# → rebuild automático
-```
-
----
-
-## Cambios en la base de datos
-
-```bash
-# 1. Editar SQL
-vim database/scripts/schema/schema.sql
-
-# 2. Aplicar a PostgreSQL (psql o pgAdmin)
-
-# 3. Sincronizar Prisma
-npx prisma db pull
-npx prisma generate
-
-# 4. Commitear todo
-git add -A
-git commit -m "feat(db): agregar columna X a tabla Y"
+# Commitear package.json + package-lock.json
 ```
 
 ---
@@ -101,11 +95,8 @@ git commit -m "feat(db): agregar columna X a tabla Y"
 npm run test        # Unitarios
 npm run test:cov    # Con cobertura
 npm run test:e2e    # End-to-end
-
-# En Docker:
-docker compose exec turtle-backend npm run test
 ```
 
 ---
 
-[&larr; Anterior: Docker](./05-docker.md) | [Siguiente: API &rarr;](./07-api.md)
+[&larr; Anterior: Entorno local](./05-entorno-local.md) | [Siguiente: API &rarr;](./07-api.md)

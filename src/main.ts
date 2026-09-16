@@ -1,11 +1,25 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
+  app.enableShutdownHooks();
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+  const config = new DocumentBuilder()
+    .setTitle('Documentación de la API de TURTLE')
+    .setDescription(
+      'Documentación de los endpoints de la API utilizando Swagger.',
+    )
+    .setVersion('1.0')
+    .build();
+
+  const documentFactory = () => SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('api', app, documentFactory);
+
   await app.listen(process.env.PORT ?? 3000);
 }
 void bootstrap();
