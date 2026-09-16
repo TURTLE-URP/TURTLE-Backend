@@ -144,7 +144,21 @@ git add prisma/schema.prisma prisma/migrations
 git commit -m "feat(db): agregar columna X a tabla Y"
 ```
 
-> En CI/despliegues se aplican las migraciones ya versionadas con `npx prisma migrate deploy`.
+> En CI/despliegues se aplican las migraciones ya versionadas con `npx prisma migrate deploy` (nunca corre el seed).
+
+---
+
+## Seed y unseed (solo desarrollo)
+
+En Prisma v7 el seed **solo** corre explícito (`npx prisma db seed` o `npm run db:seed`); ni `migrate dev` ni `migrate reset` lo disparan.
+
+```bash
+npm run db:seed    # tsx prisma/seed.ts — demo idempotente (upsert por codigo)
+npm run db:unseed  # tsx prisma/unseed.ts — TRUNCATE de las 33 tablas, migraciones intactas
+```
+
+* **Seed**: catálogos (unidades, insumos, almacenes, proveedor) + demo (usuarios por rol, platos con ingredientes, mesas, un pedido con pago). Idempotente: re-ejecutable sin duplicar. Misma PR que toque `schema.prisma` debe ajustar `seed.ts` (los tipos de `@prisma/client` lo exigen al compilar).
+* **Unseed**: vacía todo con `RESTART IDENTITY CASCADE` y **aborta en producción** (`NODE_ENV=production`). Los datos de prod que deban existir van en migraciones SQL versionadas, nunca en el seed.
 
 ---
 

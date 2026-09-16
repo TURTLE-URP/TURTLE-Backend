@@ -14,8 +14,10 @@ docker compose up -d
 # Copiar y ajustar variables de entorno (ver 05 — Entorno local)
 cp .env.template .env
 
-# Migraciones (también regenera el cliente Prisma)
+# Migraciones y cliente (en v7 van por separado)
 npx prisma migrate dev
+npx prisma generate
+npm run db:seed          # datos demo (idempotente)
 ```
 
 > Desde este momento todo (compilar, tests, debugger, IDE) corre en tu host.
@@ -72,7 +74,7 @@ git add prisma/schema.prisma prisma/migrations
 git commit -m "feat(db): describir el cambio"
 ```
 
-> El cliente `@prisma/client` se regenera solo con `npm install` (postinstall), `npm run build` (prebuild) y `npx prisma migrate dev`. Solo corre `npx prisma generate` a mano si los tipos están desactualizados.
+> El cliente `@prisma/client` se genera con `npm install` (postinstall), `npm run build` (prebuild) o `npx prisma generate` explícito. En Prisma v7, `migrate dev` **no** regenera el cliente ni corre el seed: van por separado.
 
 > Los scripts de `database/scripts/initialization/` solo se ejecutan al crear el volumen por primera vez. Si cambias usuarios/permisos, borra el volumen con `down -v` para re-ejecutarlos.
 
