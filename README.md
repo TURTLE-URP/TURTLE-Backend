@@ -71,7 +71,7 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
-La API queda en [http://localhost:3000](http://localhost:3000), health check en [http://localhost:3000/health](http://localhost:3000/health).
+La API queda en [http://localhost:3000](http://localhost:3000), readiness en [http://localhost:3000/health](http://localhost:3000/health) y liveness en [http://localhost:3000/health/live](http://localhost:3000/health/live).
 
 > Detalle de variables y Docker: [docs/05-entorno-local.md](docs/05-entorno-local.md).
 > Flujo diario de desarrollo: [docs/06-desarrollo.md](docs/06-desarrollo.md).

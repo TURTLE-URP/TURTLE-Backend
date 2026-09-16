@@ -20,7 +20,7 @@ Hello World
 
 ## `GET /health`
 
-**Health check del sistema.** Usa `@nestjs/terminus` para verificar conectividad.
+**Readiness: ¿puede atender tráfico?** Usa `@nestjs/terminus` para verificar PostgreSQL vía Prisma (`SELECT 1` con timeout de 2 s). No depende de internet ni de integraciones externas.
 
 ```bash
 curl http://localhost:3000/health
@@ -31,7 +31,6 @@ curl http://localhost:3000/health
 {
   "status": "ok",
   "info": {
-    "nestjs-docs": { "status": "up" },
     "database": { "status": "up" }
   }
 }
@@ -48,12 +47,30 @@ curl http://localhost:3000/health
 }
 ```
 
-> ⚠️ El indicador `nestjs-docs` hace ping a docs.nestjs.com, por lo que el health check requiere acceso a internet.
-
 | Indicador | Verifica |
 |---|---|
-| `nestjs-docs` | HTTP ping a docs.nestjs.com |
 | `database` | Prisma ping a PostgreSQL |
+
+> Prueba útil: con `docker compose stop postgres-db`, `/health` debe dar 503 mientras `/health/live` sigue en 200 — eso confirma "mi API vive, mi BD no".
+
+---
+
+## `GET /health/live`
+
+**Liveness: ¿sigue vivo el proceso?** Solo mide el heap de Node en memoria, sin I/O externo (ni BD ni red). Diseñado para probes que deciden **reinicios** (Docker `healthcheck`, K8s `livenessProbe`).
+
+```bash
+curl http://localhost:3000/health/live
+```
+
+```json
+{
+  "status": "ok",
+  "info": {
+    "memory_heap": { "status": "up" }
+  }
+}
+```
 
 ---
 
