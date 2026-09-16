@@ -1,46 +1,9 @@
 services:
-  backend:
-    build:
-      context: .
-      target: development
-    env_file:
-      - .env
-    ports:
-      - "${PORT}:${PORT}"
-    networks:
-      - backend_network
-    healthcheck:
-      test: ["CMD", "node", "healthcheck.js"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
-    depends_on:
-      postgres-db:
-        condition: service_healthy
-    develop:
-      watch:
-        # Sincronizacion para cualquier codigo de src. Ignoramos el codigo cliente generado de prisma ya que este
-        # es propio por sistema operativo. Ademas que se obtiene por medio de observaciones en ./prisma
-        - path: ./src
-          action: sync
-          target: /usr/src/app/src
-          ignore:
-            - src/generated/
-        # Sincronizacion y reinicio del contenedor cada vez que se actualiza el schema de prisma por una migracion
-        # Esto para que el contenedor tenga todas las migraciones a su alcance y tambien el codigo mas actualizado
-        # del Prisma Client.
-        - path: ./prisma
-          action: sync+restart
-          target: /usr/src/app/prisma
-        # recostruccion total del contenedor cuando se agrega y/o eliminan dependencias
-        - action: rebuild
-          path: package.json
   postgres-db:
     image: postgres:18-alpine
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "pg_isready", "-d", "${DATABASE_NAME}", "-h", "localhost" ]
+      test: ["CMD", "pg_isready", "-d", "${DATABASE_NAME}", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -62,10 +25,30 @@ services:
           memory: 512m
         reservations:
           memory: 256m
-    networks:
-      - backend_network
+  pgadmin:
+    image: dpage/pgadmin4:9.14.0
+    restart: unless-stopped
+    profiles:
+      - dbClient
+    healthcheck:
+      test: ["CMD", "wget", "-O", "-", "http://localhost:80/misc/ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+    ports:
+      - ${HOST_PGADMIN_PORT}:80
+    volumes:
+      - pg-admin-data:/var/lib/pgadmin
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+        reservations:
+          memory: 128m
 volumes:
   pg-data:
-networks:
-  backend_network:
-    driver: "bridge"
+  pg-admin-data:

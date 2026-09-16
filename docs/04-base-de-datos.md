@@ -150,15 +150,14 @@ git commit -m "feat(db): agregar columna X a tabla Y"
 
 ## Conexión
 
-El cliente usa `DATABASE_URL` (ver `.env.template`). Dentro de Docker el host es `postgres-db`; fuera de Docker usa `localhost`:
+El backend corre nativo y se conecta por `DATABASE_URL` (ver `.env.template`), con host `localhost`:
 
 ```
-postgresql://prisma_dev_user:prisma@postgres-db:5432/turtle   # dentro de Docker
-postgresql://prisma_dev_user:prisma@localhost:5432/turtle     # desarrollo local
+postgresql://prisma_dev_user:prisma@localhost:5432/turtle
 ```
 
-El usuario `prisma_dev_user` y sus permisos se crean automáticamente por los scripts de `database/scripts/initialization/`.
+El usuario `prisma_dev_user` y sus permisos se crean automáticamente por los scripts de `database/scripts/initialization/` al levantar `postgres-db` con Docker.
 
 ---
 
-[&larr; Anterior: Arquitectura](./03-arquitectura.md) | [Siguiente: Docker &rarr;](./05-docker.md)
+[&larr; Anterior: Arquitectura](./03-arquitectura.md) | [Siguiente: Entorno local &rarr;](./05-entorno-local.md)

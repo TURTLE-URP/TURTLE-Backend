@@ -1,32 +1,43 @@
 # 06 — Desarrollo local
 
+El backend corre **nativo** en tu máquina. Docker solo aporta la base de datos (ver [05 — Entorno local](./05-entorno-local.md)).
+
 ## Setup inicial
 
 ```bash
 nvm use                  # Node 24.15.0
 npm install              # Instalar dependencias
-npx prisma generate      # Generar cliente Prisma
+
+# Levantar la base de datos
+docker compose up -d
+
+# Migraciones y cliente Prisma
+npx prisma migrate dev
+npx prisma generate
 ```
 
-> Dentro del contenedor de Docker el `prisma generate` se ejecuta automáticamente en cada arranque (ver `npm run start:dev`).
+> Desde este momento todo (compilar, tests, debugger, IDE) corre en tu host.
 
 ---
 
-## Elige tu opción
+## Flujo diario
 
-```mermaid
-flowchart LR
-    A["¿Cómo quieres\ntrabajar?"] --> B["Con Docker\n(recomendado)"]
-    A --> C["Sin Docker\n(solo backend)"]
-    B --> D["docker compose\nup --build --watch"]
-    C --> E["Necesitas PostgreSQL\ncorriendo aparte"]
-    E --> F["npm run start:dev"]
+```bash
+# 1. Levantar la BD (si no está arriba)
+docker compose up -d
 
-    style A fill:#30363d,stroke:#8b949e,color:#fff
-    style B fill:#1f6feb,stroke:#58a6ff,color:#fff
-    style C fill:#9e6a03,stroke:#d29922,color:#fff
-    style D fill:#238636,stroke:#3fb950,color:#fff
-    style F fill:#238636,stroke:#3fb950,color:#fff
+# 2. Iniciar el backend con hot-reload
+npm run start:dev
+
+# 3. Editar código en ./src/
+#    → nest start --watch recompila y reinicia
+
+# 4. Verificar
+curl http://localhost:3000/
+curl http://localhost:3000/health
+
+# 5. Tests
+npm run test
 ```
 
 ---
@@ -43,48 +54,6 @@ flowchart LR
 | `npm run test` | Tests unitarios (Jest) |
 | `npm run test:cov` | Tests con cobertura |
 | `npm run test:e2e` | Tests end-to-end |
-
----
-
-## Flujo diario con Docker
-
-```bash
-# 1. Levantar servicios
-docker compose up --build --watch
-
-# 2. Aplicar migraciones (la primera vez)
-docker compose exec backend npx prisma migrate deploy
-
-# 3. Editar código en ./src/
-#    → Docker sync copia los cambios al contenedor
-#    → nest start --watch reinicia el servidor
-
-# 4. Verificar
-curl http://localhost:3000/
-curl http://localhost:3000/health
-
-# 5. Tests dentro del contenedor
-docker compose exec backend npm run test
-```
-
----
-
-## Desarrollo sin Docker
-
-```bash
-# 1. Levantar solo la base de datos
-docker compose up -d postgres-db
-
-# 2. Apuntar DATABASE_URL al host local
-#    En .env: postgresql://prisma_dev_user:prisma@localhost:5432/turtle
-
-# 3. Migraciones y cliente
-npx prisma migrate dev
-npx prisma generate
-
-# 4. Iniciar el backend
-npm run start:dev
-```
 
 ---
 
@@ -109,8 +78,7 @@ git commit -m "feat(db): describir el cambio"
 
 ```bash
 npm install algun-paquete
-# Docker detecta el cambio en package.json
-# → rebuild automático
+# Commitear package.json + package-lock.json
 ```
 
 ---
@@ -121,11 +89,8 @@ npm install algun-paquete
 npm run test        # Unitarios
 npm run test:cov    # Con cobertura
 npm run test:e2e    # End-to-end
-
-# En Docker:
-docker compose exec backend npm run test
 ```
 
 ---
 
-[&larr; Anterior: Docker](./05-docker.md) | [Siguiente: API &rarr;](./07-api.md)
+[&larr; Anterior: Entorno local](./05-entorno-local.md) | [Siguiente: API &rarr;](./07-api.md)

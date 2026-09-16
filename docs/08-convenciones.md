@@ -55,19 +55,16 @@ import { PrismaService } from '@src/prisma/prisma.service';
 
 **Problema**: el proceso anterior no se mató y el puerto queda ocupado.
 
-**Solución**: reiniciar el servicio del contenedor:
+**Solución**: liberar el puerto antes de relanzar:
 
 ```bash
-docker compose restart backend
+# Ver qué usa el puerto 3000
+lsof -i :3000
+
+# Mata el proceso y relanza
+kill <PID>
+npm run start:dev
 ```
-
-Si corres en el host, mata el proceso que ocupa el puerto antes de relanzar.
-
-### Hot-reload no funciona en slim
-
-**Problema**: las imágenes `node:slim` no tienen los binarios necesarios para el file watcher.
-
-**Solución**: usar la imagen `node:${version}` completa (no slim). El Dockerfile ya usa `node:24.15.0`.
 
 ### Prisma no encuentra el schema o falta el cliente generado
 
@@ -81,27 +78,23 @@ El directorio `src/generated/prisma` está en `.gitignore`: se regenera y nunca 
 ### Error de conexión a PostgreSQL
 
 ```bash
-# Verificar que postgres está healthy
+# Verificar que postgres-db está healthy
 docker compose ps
 
-# Verificar DATABASE_URL
-docker compose exec backend printenv DATABASE_URL
+# La URL debe usar "localhost", no "postgres-db"
+# ✅ correcto: postgresql://prisma_dev_user:prisma@localhost:5432/turtle
+# ❌ incorrecto: postgresql://prisma_dev_user:prisma@postgres-db:5432/turtle
 
-# Dentro de Docker la URL debe usar "postgres-db" como host, no "localhost"
-# ✅ correcto:   postgresql://prisma_dev_user:prisma@postgres-db:5432/turtle
-# ❌ incorrecto: postgresql://prisma_dev_user:prisma@localhost:5432/turtle
-
-# Fuera de Docker, usa "localhost"
-# ✅ local:      postgresql://prisma_dev_user:prisma@localhost:5432/turtle
+# Si cambiaste el puerto en DATABASE_PORT, refleja el cambio en DATABASE_URL
 ```
 
 ### `@nestjs/config` no encuentra `.env`
 
-El `ConfigModule` lee desde la raíz del proyecto. Si corres comandos desde otra carpeta, especifica la ruta:
+El `ConfigModule` lee desde la raíz del proyecto. Los comandos se corren desde la raíz:
 
 ```bash
-# En el docker-compose, el working directory es /usr/src/app
 # Asegúrate de que .env existe en la raíz del proyecto
+ls .env
 ```
 
 ---

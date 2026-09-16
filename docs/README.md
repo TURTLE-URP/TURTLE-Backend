@@ -15,7 +15,7 @@ flowchart LR
     A["01 Introducción"] --> B["02 Stack"]
     B --> C["03 Arquitectura"]
     C --> D["04 Base de Datos"]
-    D --> E["05 Docker"]
+    D --> E["05 Entorno\nlocal"]
     E --> F["06 Desarrollo"]
     F --> G["07 API"]
     G --> H["08 Convenciones"]
@@ -44,7 +44,7 @@ flowchart LR
 | 02 | Stack tecnológico | [Abrir](./02-stack.md) |
 | 03 | Arquitectura de módulos | [Abrir](./03-arquitectura.md) |
 | 04 | Base de datos | [Abrir](./04-base-de-datos.md) |
-| 05 | Docker | [Abrir](./05-docker.md) |
+| 05 | Entorno local (PostgreSQL en Docker) | [Abrir](./05-entorno-local.md) |
 | 06 | Desarrollo local | [Abrir](./06-desarrollo.md) |
 | 07 | API endpoints | [Abrir](./07-api.md) |
 | 08 | Convenciones y troubleshooting | [Abrir](./08-convenciones.md) |

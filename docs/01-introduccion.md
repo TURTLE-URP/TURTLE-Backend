@@ -43,9 +43,9 @@ flowchart TB
 ```
 
 - **API REST** con NestJS 11
-- **Base de datos** PostgreSQL 18
+- **Base de datos** PostgreSQL 18 (levantada con Docker, solo la BD)
 - **ORM** Prisma 7 con `adapter-pg`
-- **Contenedores** Docker con multi-stage build
+- **Backend nativo**: `npm run start:dev` con hot-reload en tu máquina
 
 ---
 
