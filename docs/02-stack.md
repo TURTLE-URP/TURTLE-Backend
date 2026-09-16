@@ -79,4 +79,25 @@ node --version # → v24.15.0
 
 ---
 
+## Política de versiones `@nestjs/*`
+
+En el ecosistema Nest, el **major de los paquetes `@nestjs/*` acompaña al major del framework**: con `@nestjs/common` en `11.x`, todo paquete `@nestjs/*` nuevo debe instalarse en su línea `11.x` (ej. `@nestjs/swagger@^11`, `@nestjs/terminus@^11`).
+
+Instalar sin fijar el major trae la última versión, que puede pedir otro Nest y romper la instalación con `ERESOLVE` (ver [troubleshooting](./08-convenciones.md)). Antes de agregar un paquete `@nestjs/*`:
+
+```bash
+# 1. Ver qué majors existen
+npm view @nestjs/swagger versions --json | tail -5
+
+# 2. Confirmar que sus peers piden nuestro Nest (11.x)
+npm view @nestjs/swagger@11 peerDependencies
+
+# 3. Instalar fijando el major compatible
+npm install --save @nestjs/swagger@^11
+```
+
+Fuente oficial de equivalencias: los [releases en GitHub](https://github.com/nestjs/swagger/releases) de cada paquete documentan con qué Nest va cada major (ej. swagger v11 → Nest 11, v12 → Nest 12). Nunca uses `--force` ni `--legacy-peer-deps` para tapar el conflicto.
+
+---
+
 [&larr; Anterior: Introducción](./01-introduccion.md) | [Siguiente: Arquitectura &rarr;](./03-arquitectura.md)

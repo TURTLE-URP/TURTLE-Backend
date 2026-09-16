@@ -110,6 +110,19 @@ npm run build   # desde aquí dist/ vuelve a ser tuya, sin sudo
 
 Para que no vuelva a pasar: trabaja siempre sin `sudo` y, si dockerizas el backend, no montes `./dist` como volumen (o fija `user: "${UID:-1000}:${GID:-1000}"` en el compose).
 
+### `ERESOLVE` al instalar un paquete `@nestjs/*`
+
+**Problema**: `npm install @nestjs/<paquete>` falla con `ERESOLVE unable to resolve dependency tree` y un `peer @nestjs/common@"^X"` distinto al Nest del proyecto. Pediste un major hecho para otro Nest (ej. swagger 12 pide Nest 12, el proyecto usa Nest 11).
+
+**Solución**: instalar fijando el major compatible con `@nestjs/common` (ver [política de versiones](./02-stack.md)):
+
+```bash
+npm view @nestjs/swagger@11 peerDependencies  # confirmar peers
+npm install --save @nestjs/swagger@^11
+```
+
+Nunca `--force` ni `--legacy-peer-deps`: tapan el conflicto e instalan una combinación que puede fallar en runtime.
+
 ---
 
 [&larr; Anterior: API](./07-api.md) | [Siguiente: Integraciones DNI / RUC &rarr;](./09-integraciones-dni-ruc.md)
