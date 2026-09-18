@@ -24,6 +24,8 @@ import { Trabajador } from '@prisma/client';
 import { CreateWorkerResponse } from './entities/create-worker-response.entity';
 import { WorkerResponseEntity } from './entities/worker-response.entity';
 import { UpdateActivoDto } from './dto/update-activo.dto';
+import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+import { Roles } from '@src/auth/decorators/roles.decorator';
 
 @Controller('workers')
 @ApiTags('Trabajadores')
@@ -50,16 +52,19 @@ export class WorkersController {
   }
 
   @Get()
+  @Roles('administrador', 'jefe')
   findAll() {
     // return this.workersService.findAll();
   }
 
   @Get(':id')
+  @Roles('administrador', 'jefe')
   findOne(@Param('id', ParseIntPipe) id: Trabajador['id']) {
     // return this.workersService.findOne(id);
   }
 
   @Patch(':id/activo')
+  @Roles('administrador', 'jefe')
   @ApiOperation({
     summary:
       'Endpoint para activar/desactivar trabajadores, devuelve el trabajador actualizado.',
@@ -94,7 +99,17 @@ export class WorkersController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.workersService.remove(id);
+  @ApiOperation({
+    summary:
+      'Endpoint para eliminar trabajadores (baja lógica), devuelve confirmación.',
+  })
+  @Roles('administrador', 'jefe')
+  @ApiOkResponse({ description: 'Trabajador eliminado (baja lógica).' })
+  @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() deletedBy: number,
+  ) {
+    return this.workersService.remove(id, deletedBy);
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, Inject } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  Inject,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Prisma, Usuario } from '@prisma/client';
 import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
@@ -75,17 +80,41 @@ export class UsersService {
   }
 
   async findWorker(email: string) {
-    const worker = await this.prisma.usuario.findFirst({
-      where: { email, tipo_usuario: 'trabajador', deleted_at: null },
+    return this.prisma.usuario.findFirst({
+      where: {
+        email: email.trim().toLowerCase(),
+        tipo_usuario: 'trabajador',
+        deleted_at: null,
+      },
       include: {
         trabajador: true,
       },
     });
-
-    return worker;
   }
 
-  async remove(userId: number) {}
+  async remove(userId: number, deletedBy: number) {
+    const existing = await this.prisma.usuario.findFirst({
+      where: { id: userId, tipo_usuario: 'trabajador', deleted_at: null },
+      include: { trabajador: true },
+    });
+
+    if (!existing?.trabajador) {
+      throw new NotFoundException('Trabajador no encontrado.');
+    }
+
+    const now = new Date();
+    await this.prisma.usuario.update({
+      where: { id: userId },
+      data: {
+        deleted_at: now,
+        updated_at: now,
+        deleted_by: deletedBy,
+        trabajador: { update: { activo: false } },
+      },
+    });
+
+    return { id: userId, message: `Trabajador #${userId} eliminado.` };
+  }
 
   private async checkUserExists(email: Usuario['email']) {
     const usuarioExistente = await this.prisma.usuario.findUnique({

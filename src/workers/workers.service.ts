@@ -16,10 +16,10 @@ export class WorkersService {
   ) {}
 
   async create(dto: CreateWorkerDto): Promise<CreateWorkerResponse> {
-    const workerUserWithPassword =
+    const { user, plainPassword } =
       await this.usersService.createUsuarioTrabajador(dto);
 
-    return toResponse(CreateWorkerResponse, workerUserWithPassword);
+    return toResponse(CreateWorkerResponse, { ...user, plainPassword });
   }
 
   //   async findAll() {
@@ -42,7 +42,7 @@ export class WorkersService {
     id: number,
     dto: UpdateWorkerDto,
   ): Promise<WorkerResponseEntity> {
-    const worker = this.prisma.usuario.findFirst({
+    const worker = await this.prisma.usuario.findFirst({
       where: { id, tipo_usuario: 'trabajador', deleted_at: null },
       include: { trabajador: true },
     });
@@ -82,7 +82,7 @@ export class WorkersService {
     return toResponse(WorkerResponseEntity, actualizado);
   }
 
-  async remove(id: number) {
-    return this.usersService.remove(id);
+  async remove(id: number, deletedBy: number) {
+    return this.usersService.remove(id, deletedBy);
   }
 }
