@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
-import { customer_order_status_type } from '@src/generated/prisma/client';
+// import { customer_order_status_type } from '@src/generated/prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 import {
   UpdateOrderStatusDto,
@@ -20,6 +20,7 @@ import {
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  /*
   @Post()
   create(@Body() dto: CreateOrderDto) {
     return this.ordersService.create(dto);
@@ -56,4 +57,5 @@ export class OrdersController {
   ) {
     return this.ordersService.updateItemStatus(id, itemId, dto.status);
   }
+  */
 }

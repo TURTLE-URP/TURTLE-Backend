@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { PaymentsService } from './payments.service';
-import { payment_method_type } from '@src/generated/prisma/client';
+// import { payment_method_type } from '@src/generated/prisma/client';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import {
   CreatePaymentDetailOnlyDto,
@@ -21,6 +21,7 @@ import {
 export class PaymentsController {
   constructor(private readonly paymentsService: PaymentsService) {}
 
+  /*
   @Post()
   create(@Body() dto: CreatePaymentDto) {
     return this.paymentsService.create(dto);
@@ -79,4 +80,5 @@ export class PaymentsController {
   removeDetail(@Param('detailId', ParseIntPipe) detailId: number) {
     return this.paymentsService.removeDetail(detailId);
   }
+  */
 }

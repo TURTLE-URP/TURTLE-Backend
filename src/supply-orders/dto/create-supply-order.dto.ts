@@ -6,7 +6,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { supply_order_modality_type } from '@src/generated/prisma/client';
+// import { supply_order_modality_type } from '@src/generated/prisma/client';
 
 export class SupplyOrderItemDto {
   @IsNumber()
@@ -18,8 +18,8 @@ export class SupplyOrderItemDto {
 }
 
 export class CreateSupplyOrderDto {
-  @IsEnum(supply_order_modality_type)
-  modality!: supply_order_modality_type;
+  // @IsEnum(supply_order_modality_type)
+  // modality!: supply_order_modality_type;
 
   @IsArray()
   @ValidateNested({ each: true })

@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import {
-  customer_order_status_type,
-  customer_order_item_status_type,
-} from '@src/generated/prisma/client';
+// import {
+//   customer_order_status_type,
+//   customer_order_item_status_type,
+// } from '@src/generated/prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const TAX_RATE = 0.18;
@@ -12,6 +12,7 @@ const TAX_RATE = 0.18;
 export class OrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async create(dto: CreateOrderDto) {
     const table = await this.prisma.restaurant_table.findUnique({
       where: { table_number: dto.tableNumber },
@@ -140,4 +141,5 @@ export class OrdersService {
       orderBy: { created_at: 'desc' },
     });
   }
+  */
 }

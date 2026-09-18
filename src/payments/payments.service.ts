@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { Prisma, payment_method_type } from '@src/generated/prisma/client';
+// import { Prisma, payment_method_type } from '@src/generated/prisma/client';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import {
   CreatePaymentDetailOnlyDto,
@@ -22,6 +22,7 @@ const include = {
 export class PaymentsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async create(dto: CreatePaymentDto) {
     const order = await this.prisma.customer_order.findUnique({
       where: { customer_order_id: dto.customerOrderId },
@@ -154,4 +155,5 @@ export class PaymentsService {
       where: { payment_detail_id: detailId },
     });
   }
+  */
 }

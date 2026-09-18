@@ -5,6 +5,7 @@ import { MenuItemsService } from './menu-items.service';
 export class MenuItemsController {
   constructor(private readonly menuItemsService: MenuItemsService) {}
 
+  /*
   @Get()
   findAll(@Query('tag') tag?: string) {
     return this.menuItemsService.findAll(tag);
@@ -14,4 +15,5 @@ export class MenuItemsController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.menuItemsService.findOne(id);
   }
+  */
 }

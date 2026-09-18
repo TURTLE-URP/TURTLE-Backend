@@ -8,13 +8,14 @@ import {
   Body,
 } from '@nestjs/common';
 import { AuditService } from './audit.service';
-import { audit_action_type } from '@src/generated/prisma/client';
+// import { audit_action_type } from '@src/generated/prisma/client';
 import { CreateAuditDto } from './dto/create-audit.dto';
 
 @Controller('api/audit')
 export class AuditController {
   constructor(private readonly auditService: AuditService) {}
 
+  /*
   @Post()
   create(@Body() dto: CreateAuditDto) {
     return this.auditService.create(dto);
@@ -42,4 +43,5 @@ export class AuditController {
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.auditService.findOne(id);
   }
+  */
 }

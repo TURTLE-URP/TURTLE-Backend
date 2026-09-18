@@ -5,6 +5,7 @@ import { PrismaService } from '@src/prisma/prisma.service';
 export class TablesService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async findByNumber(tableNumber: number) {
     const table = await this.prisma.restaurant_table.findUnique({
       where: { table_number: tableNumber },
@@ -27,4 +28,5 @@ export class TablesService {
       data: { status },
     });
   }
+  */
 }

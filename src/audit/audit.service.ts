@@ -1,12 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { Prisma, audit_action_type } from '@src/generated/prisma/client';
+// import { Prisma, audit_action_type } from '@src/generated/prisma/client';
 import { CreateAuditDto } from './dto/create-audit.dto';
 
 @Injectable()
 export class AuditService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async create(dto: CreateAuditDto) {
     const user = await this.prisma.user.findFirst({
       where: { user_id: dto.userId, deleted_at: null },
@@ -74,4 +75,5 @@ export class AuditService {
       orderBy: { timestamp: 'desc' },
     });
   }
+  */
 }

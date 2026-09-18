@@ -9,6 +9,7 @@ import {
 export class SupplyOrdersController {
   constructor(private readonly supplyOrdersService: SupplyOrdersService) {}
 
+  /*
   @Get('metrics')
   getMetrics() {
     return this.supplyOrdersService.getMetrics();
@@ -43,4 +44,5 @@ export class SupplyOrdersController {
   createOrders(@Body() dto: CreateSupplyOrderDto) {
     return this.supplyOrdersService.createOrders(dto);
   }
+  */
 }

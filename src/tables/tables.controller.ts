@@ -12,6 +12,7 @@ import { TablesService } from './tables.service';
 export class TablesController {
   constructor(private readonly tablesService: TablesService) {}
 
+  /*
   @Get()
   findAll() {
     return this.tablesService.findAll();
@@ -29,4 +30,5 @@ export class TablesController {
   ) {
     return this.tablesService.updateStatus(tableNumber, status);
   }
+  */
 }

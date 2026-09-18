@@ -23,6 +23,7 @@ const include = {
 export class ComandasService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async create(dto: CreateComandaDto) {
     const order = await this.prisma.customer_order.findUnique({
       where: { customer_order_id: dto.customerOrderId },
@@ -167,4 +168,5 @@ export class ComandasService {
       orderBy: { timestamp: 'desc' },
     });
   }
+  */
 }

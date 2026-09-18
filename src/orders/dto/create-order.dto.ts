@@ -9,7 +9,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { customer_order_type } from '@src/generated/prisma/client';
+// import { customer_order_type } from '@src/generated/prisma/client';
 
 export class CreateOrderItemDto {
   @IsInt()
@@ -34,8 +34,8 @@ export class CreateOrderDto {
   @IsString()
   customerId!: string;
 
-  @IsEnum(customer_order_type)
-  orderType!: customer_order_type;
+  // @IsEnum(customer_order_type)
+  // orderType!: customer_order_type;
 
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)

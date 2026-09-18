@@ -12,6 +12,7 @@ const supplierOptionsInclude = {
 export class SupplyOrdersService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async getMetrics() {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -290,4 +291,5 @@ export class SupplyOrdersService {
       orders,
     };
   }
+  */
 }

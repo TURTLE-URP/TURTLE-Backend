@@ -10,7 +10,7 @@ import {
   IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { payment_method_type } from '@src/generated/prisma/client';
+// import { payment_method_type } from '@src/generated/prisma/client';
 
 export class CreatePaymentDetailDto {
   @IsInt()
@@ -33,8 +33,8 @@ export class CreatePaymentDto {
   @IsInt()
   customerOrderId!: number;
 
-  @IsEnum(payment_method_type)
-  paymentMethod!: payment_method_type;
+  // @IsEnum(payment_method_type)
+  // paymentMethod!: payment_method_type;
 
   @IsNumber()
   @Min(0)

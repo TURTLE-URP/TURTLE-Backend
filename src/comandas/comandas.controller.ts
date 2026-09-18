@@ -17,6 +17,7 @@ import { CreateKitchenMovementDto } from './dto/create-kitchen-movement.dto';
 export class ComandasController {
   constructor(private readonly comandasService: ComandasService) {}
 
+  /*
   @Post()
   create(@Body() dto: CreateComandaDto) {
     return this.comandasService.create(dto);
@@ -83,4 +84,5 @@ export class ComandasController {
   getMovements(@Param('itemId', ParseIntPipe) itemId: number) {
     return this.comandasService.getMovements(itemId);
   }
+  */
 }

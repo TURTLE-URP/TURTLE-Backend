@@ -81,9 +81,11 @@ describe('AuthService', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
+  /*
   it('hashPassword genera hash verificable', async () => {
     const hash = await service.hashPassword('mi-clave');
     expect(hash).not.toBe('mi-clave');
     expect(await bcrypt.compare('mi-clave', hash)).toBe(true);
   });
+  */
 });

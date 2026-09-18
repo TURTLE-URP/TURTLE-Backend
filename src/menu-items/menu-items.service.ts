@@ -16,6 +16,7 @@ const itemInclude = {
 export class MenuItemsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /*
   async findAll(tag?: string) {
     const where: any = { status: 'available' };
     if (tag) {
@@ -46,4 +47,5 @@ export class MenuItemsService {
     if (!item) throw new NotFoundException(`Menu item #${id} no encontrado`);
     return item;
   }
+  */
 }
