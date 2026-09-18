@@ -1,19 +1,22 @@
 import { Injectable, ConflictException, Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma, Usuario } from '@prisma/client';
 import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { CreateWorkerDto } from '@src/workers/dto/create-worker.dto';
 import { randomBytes } from 'node:crypto';
-
+import { hash } from 'bcryptjs';
 @Injectable()
 export class UsersService {
-  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(ConfigService) private readonly config: ConfigService,
+  ) {}
 
   async createUsuarioTrabajador(dto: CreateWorkerDto) {
-    // 1. Lógica de negocio: Validar si el email ya existe
-    this.checkUserExists(dto.email);
-
-    // 2. Preparando el objeto de entrada
+    await this.checkUserExists(dto.email);
+    const plainPassword = this.generateUserFirstPassword(12);
+    const password_hash = await this.hashPassword(plainPassword);
     const data: Prisma.UsuarioCreateInput = {
       email: dto.email,
       tipo_usuario: 'trabajador',
@@ -22,7 +25,7 @@ export class UsersService {
         create: {
           nombre: dto.name,
           apellido: dto.lastName,
-          password_hash: '',
+          password_hash: password_hash,
           activo: true,
           rol: dto.role,
         },
@@ -35,11 +38,11 @@ export class UsersService {
       include: { trabajador: true }, // Incluimos el trabajador en la respuesta
     });
 
-    return user;
+    return { user, plainPassword };
   }
 
   async createUsuarioClienteDigital(dto: CreateCustomerDto) {
-    this.checkUserExists(dto.email);
+    await this.checkUserExists(dto.email);
 
     const data: Prisma.UsuarioCreateInput = {
       email: dto.email,
@@ -63,6 +66,25 @@ export class UsersService {
     return user;
   }
 
+  async findOne(email: string) {
+    const user = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    return user;
+  }
+
+  async findWorker(email: string) {
+    const worker = await this.prisma.usuario.findFirst({
+      where: { email, tipo_usuario: 'trabajador', deleted_at: null },
+      include: {
+        trabajador: true,
+      },
+    });
+
+    return worker;
+  }
+
   async remove(userId: number) {}
 
   private async checkUserExists(email: Usuario['email']) {
@@ -75,15 +97,12 @@ export class UsersService {
     }
   }
 
-  async findOne(email: string) {
-    const user = await this.prisma.usuario.findUnique({
-      where: { email },
-    });
-
-    return user;
-  }
-
   private generateUserFirstPassword(length: number = 12) {
     return randomBytes(length).toString('base64').slice(0, length); // Asegura la longitud exacta
+  }
+
+  private async hashPassword(plain: string): Promise<string> {
+    const rounds = parseInt(this.config.get<string>('BCRYPT_ROUNDS', '10'), 10);
+    return hash(plain, rounds);
   }
 }

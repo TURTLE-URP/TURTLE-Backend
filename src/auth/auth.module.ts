@@ -9,12 +9,15 @@ import { RolesGuard } from './guards/roles.guard';
 @Module({
   imports: [
     JwtModule.registerAsync({
-      global:true,
+      global: true,
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret: config.get<string>('JWT_SECRET') ?? 'dev-secret-change-me',
+        secret: config.get<string>('JWT_SECRET', 'change-me-in-production'),
         signOptions: {
-          expiresIn: config.get<number>('JWT_EXPIRES_IN_SECONDS') ?? 28800,
+          expiresIn: parseInt(
+            config.get<string>('JWT_EXPIRES_IN_SECONDS', '28800'),
+            10,
+          ),
         },
       }),
     }),

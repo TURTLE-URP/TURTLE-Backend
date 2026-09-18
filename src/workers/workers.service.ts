@@ -21,7 +21,8 @@ export class WorkersService {
   ) {}
 
   async create(dto: CreateWorkerDto) {
-    return this.usersService.createUsuarioTrabajador(dto);
+    const {user, plainPassword} = await this.usersService.createUsuarioTrabajador(dto);
+    
   }
 
   //   async findAll() {

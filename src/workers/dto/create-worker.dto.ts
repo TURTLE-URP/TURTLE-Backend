@@ -1,6 +1,7 @@
 import { IsEmail, IsEnum, IsString, MinLength } from 'class-validator';
 import { trabajador_rol } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class CreateWorkerDto {
   @ApiProperty({
@@ -18,9 +19,11 @@ export class CreateWorkerDto {
   lastName!: string;
 
   @ApiProperty({
-    description: 'Correo electrónico para el inicio de sesión y recepción de primera contraseña.',
+    description:
+      'Correo electrónico para el inicio de sesión y recepción de primera contraseña.',
     example: 'miguel@gmail.com',
   })
+  @Transform(({ value }) => value?.trim().toLowerCase())
   @IsEmail()
   email!: string;
 

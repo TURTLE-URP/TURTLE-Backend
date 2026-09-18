@@ -4,14 +4,11 @@ import {
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { PrismaService } from '@src/prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
-import { TokenEntity } from './entities/token.entity';
 import { UsersService } from '@src/users/users.service';
-
+import { compare } from 'bcryptjs';
+import { TokenEntity } from './entities/token.entity';
 export type JwtPayload = {
   sub: string;
   email: string;
@@ -24,16 +21,41 @@ export class AuthService {
 
   constructor(
     @Inject(JwtService) private readonly jwt: JwtService,
-    @Inject(ConfigService) private readonly configService: ConfigService,
-    @Inject(UsersService) private readonly usersService: UsersService
+    @Inject(UsersService) private readonly usersService: UsersService,
   ) {}
 
-  async login(dto: LoginDto) {
-    
+  async login(dto: LoginDto): Promise<TokenEntity> {
+    const usuario = await this.usersService.findWorker(dto.email);
+    if (!usuario?.trabajador?.activo) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const ok = await this.checkPassword(
+      dto.password,
+      usuario.trabajador.password_hash,
+    );
+
+    if (!ok) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
+
+    const access_token = await this.buildJwtToken({
+      sub: usuario.id.toString(),
+      email: usuario.email,
+      rol: usuario.trabajador.rol,
+    });
+
+    return {
+      access_token,
+      token_type: 'bearer',
+    };
   }
 
-  async hashPassword(plain: string): Promise<string> {
-    const rounds = this.configService.get<number>('BCRYPT_ROUNDS') ?? 10;
-    return bcrypt.hash(plain, rounds);
+  private async checkPassword(password: string, veridicHashedPassword: string) {
+    return compare(password, veridicHashedPassword);
+  }
+
+  private async buildJwtToken(payload: JwtPayload) {
+    return await this.jwt.signAsync(payload);
   }
 }
