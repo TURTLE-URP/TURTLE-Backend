@@ -12,7 +12,7 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const ADMIN_ID = BigInt(1);
+const ADMIN_ID = 1;
 const now = () => new Date();
 
 async function main() {
@@ -41,9 +41,9 @@ async function main() {
   });
 
   for (const [id, email, nombre, rol] of [
-    [BigInt(2), 'jefe@turtle.pe', 'Jefe', 'jefe'],
-    [BigInt(3), 'mozo@turtle.pe', 'Mozo', 'mozo'],
-    [BigInt(4), 'cocinero@turtle.pe', 'Cocinero', 'cocinero'],
+    [2, 'jefe@turtle.pe', 'Jefe', 'jefe'],
+    [3, 'mozo@turtle.pe', 'Mozo', 'mozo'],
+    [4, 'cocinero@turtle.pe', 'Cocinero', 'cocinero'],
   ] as const) {
     const user = await prisma.usuario.upsert({
       where: { id },
@@ -70,10 +70,10 @@ async function main() {
   }
 
   const demoClient = await prisma.usuario.upsert({
-    where: { id: BigInt(5) },
+    where: { id: 5 },
     update: {},
     create: {
-      id: BigInt(5),
+      id: 5,
       email: 'cliente@turtle.pe',
       tipo_usuario: 'cliente_digital',
       created_at: now(),
@@ -111,7 +111,7 @@ async function main() {
   const litro = await unidad('Litro', 'L', 'volumen', '1');
 
   // ---------- Insumos + medidas ----------
-  async function insumo(codigo: string, nombre: string, unidadId: bigint) {
+  async function insumo(codigo: string, nombre: string, unidadId: number) {
     return prisma.insumo.upsert({
       where: { codigo },
       update: {},
@@ -128,7 +128,7 @@ async function main() {
   }
 
   async function medida(
-    insumoId: bigint,
+    insumoId: number,
     nombre: string,
     abreviatura: string,
     factor: string,
@@ -252,11 +252,11 @@ async function main() {
   }
 
   async function ingrediente(
-    platoId: bigint,
-    insumoId: bigint,
-    medidaId: bigint,
+    platoId: number,
+    insumoId: number,
+    medidaId: number,
     cantidad: string,
-    almacenId: bigint,
+    almacenId: number,
   ) {
     const existing = await prisma.ingredientes_Plato.findFirst({
       where: { id_plato: platoId, id_insumo: insumoId },
@@ -380,6 +380,12 @@ async function main() {
       created_at: now(),
     },
   });
+
+  // Sincronizar secuencia: se insertaron ids explícitos (1-5) en "Usuario".
+  // Sin esto, el próximo insert con id por defecto colisionaría con id=1.
+  await prisma.$executeRawUnsafe(
+    `SELECT setval(pg_get_serial_sequence('"Usuario"', 'id'), COALESCE((SELECT MAX(id) FROM "Usuario"), 1))`,
+  );
 
   console.log('✅ Seed demo completo (idempotente, re-ejecutable)');
   console.log(

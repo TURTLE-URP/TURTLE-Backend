@@ -9,7 +9,7 @@ if (process.env.NODE_ENV === 'production') {
   process.exit(1);
 }
 
-// Todas las tablas del schema (33). Con CASCADE el orden no importa,
+// Todas las tablas del schema (33 únicas). Con CASCADE el orden no importa,
 // se listan en orden inverso a las dependencias por claridad.
 // OJO: _prisma_migrations NO se toca (el historial de migraciones se conserva).
 const TABLES = [
@@ -39,7 +39,6 @@ const TABLES = [
   'Insumo_Medidas',
   'Insumo',
   'Unidad_Medida',
-  'Stock_Almacen',
   'Almacen',
   'Mesa',
   'Cliente_Digital',
