@@ -1,62 +1,89 @@
-import {
-  Injectable,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { Injectable, ConflictException, Inject } from '@nestjs/common';
+import { Prisma, Usuario } from '@prisma/client';
+import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
 import { PrismaService } from '@src/prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { CreateWorkerDto } from '@src/workers/dto/create-worker.dto';
+import { randomBytes } from 'node:crypto';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateUserDto) {
-    const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
-    });
-    if (existing && !existing.deleted_at)
-      throw new ConflictException(`El email ${dto.email} ya está registrado`);
+  async createUsuarioTrabajador(dto: CreateWorkerDto) {
+    // 1. Lógica de negocio: Validar si el email ya existe
+    this.checkUserExists(dto.email);
 
-    return this.prisma.user.create({
-      data: {
-        email: dto.email,
-        user_type: dto.userType,
+    // 2. Preparando el objeto de entrada
+    const data: Prisma.UsuarioCreateInput = {
+      email: dto.email,
+      tipo_usuario: 'trabajador',
+      // Creamos el trabajador de forma anidada simultáneamente
+      trabajador: {
+        create: {
+          nombre: dto.name,
+          apellido: dto.lastName,
+          password_hash: '',
+          activo: true,
+          rol: dto.role,
+        },
       },
-    });
-  }
+    };
 
-  async findAll() {
-    return this.prisma.user.findMany({
-      where: { deleted_at: null },
-      orderBy: { user_id: 'desc' },
+    // 3. Guardando el usuario en la BD
+    const user = await this.prisma.usuario.create({
+      data,
+      include: { trabajador: true }, // Incluimos el trabajador en la respuesta
     });
-  }
 
-  async findOne(id: number) {
-    const user = await this.prisma.user.findFirst({
-      where: { user_id: id, deleted_at: null },
-    });
-    if (!user) throw new NotFoundException(`Usuario #${id} no encontrado`);
     return user;
   }
 
-  async update(id: number, dto: UpdateUserDto) {
-    await this.findOne(id);
-    return this.prisma.user.update({
-      where: { user_id: id },
-      data: {
-        email: dto.email,
-        user_type: dto.userType,
+  async createUsuarioClienteDigital(dto: CreateCustomerDto) {
+    this.checkUserExists(dto.email);
+
+    const data: Prisma.UsuarioCreateInput = {
+      email: dto.email,
+      tipo_usuario: 'cliente_digital',
+      cliente: {
+        create: {
+          auth_provider: dto.auth_provider,
+          nombre_completo: dto.nombre_completo,
+          provider_user_id: dto.provider_user_id,
+        },
+      },
+    };
+
+    const user = await this.prisma.usuario.create({
+      data,
+      include: {
+        cliente: true,
       },
     });
+
+    return user;
   }
 
-  async remove(id: number) {
-    await this.findOne(id);
-    return this.prisma.user.update({
-      where: { user_id: id },
-      data: { deleted_at: new Date() },
+  async remove(userId: number) {}
+
+  private async checkUserExists(email: Usuario['email']) {
+    const usuarioExistente = await this.prisma.usuario.findUnique({
+      where: { email },
     });
+
+    if (usuarioExistente) {
+      throw new ConflictException('El correo electrónico ya está registrado');
+    }
+  }
+
+  async findOne(email: string) {
+    const user = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+
+    return user;
+  }
+
+  private generateUserFirstPassword(length: number = 12) {
+    return randomBytes(length).toString('base64').slice(0, length); // Asegura la longitud exacta
   }
 }

@@ -22,8 +22,10 @@ import { memoryStorage } from 'multer';
 import { CloudinaryService } from './cloudinary.service';
 import { DeleteMediaDto } from './dto/delete-media.dto';
 import { UploadedMedia } from './entities/uploaded-media.entity';
+import { Public } from '@src/auth/decorators/public.decorator';
 
 @ApiTags('media')
+@Public()
 @Controller('media')
 export class CloudinaryController {
   constructor(

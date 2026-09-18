@@ -9,8 +9,10 @@ import {
 } from '@nestjs/swagger';
 import { DniService } from './dni.service';
 import { DniLookup } from './entities/dni.entity';
+import { Public } from '@src/auth/decorators/public.decorator';
 
 @ApiTags('dni')
+@Public()
 @Controller('dni')
 export class DniController {
   constructor(@Inject(DniService) private readonly dniService: DniService) {}

@@ -1,13 +1,33 @@
-import { IsEnum, IsString } from 'class-validator';
-import { auth_provider_type } from '@src/generated/prisma/client';
+import { ApiProperty } from '@nestjs/swagger';
+import { cliente_auth_provider } from '@prisma/client';
+import { IsEmail, IsEnum, IsString } from 'class-validator';
 
 export class CreateCustomerDto {
-  @IsString()
-  fullName!: string;
+  @ApiProperty({
+    description: 'Correo electronico del cliente',
+    example: 'hjuan225@outlook.com',
+  })
+  @IsEmail()
+  email!: string;
 
-  @IsEnum(auth_provider_type)
-  authProvider!: auth_provider_type;
-
+  @ApiProperty({
+    description: 'Nombre completo del cliente',
+    example: 'Humberto Juan Gutierrez Vega',
+  })
   @IsString()
-  providerUserId!: string;
+  nombre_completo!: string;
+
+  @ApiProperty({
+    description: 'Proveedor de Identidad utilizado',
+    example: 'google',
+  })
+  @IsEnum(cliente_auth_provider)
+  auth_provider!: cliente_auth_provider;
+
+  @ApiProperty({
+    description: 'ID otorgado por el proveedor',
+    example: '121645156',
+  })
+  @IsString()
+  provider_user_id!: string;
 }

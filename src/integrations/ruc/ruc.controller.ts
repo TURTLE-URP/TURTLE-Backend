@@ -8,8 +8,10 @@ import {
 } from '@nestjs/swagger';
 import { RucService } from './ruc.service';
 import { RucLookup } from './entities/ruc.entity';
+import { Public } from '@src/auth/decorators/public.decorator';
 
 @ApiTags('ruc')
+@Public()
 @Controller('ruc')
 export class RucController {
   constructor(@Inject(RucService) private readonly rucService: RucService) {}

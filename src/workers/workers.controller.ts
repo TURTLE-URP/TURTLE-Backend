@@ -1,5 +1,6 @@
+import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import {
-  Controller,
   Get,
   Post,
   Patch,
@@ -11,11 +12,13 @@ import {
 import { WorkersService } from './workers.service';
 import { CreateWorkerDto } from './dto/create-worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
+import { Trabajador } from '@prisma/client';
 
-@Controller('api/users/workers')
+@Controller('workers')
+@ApiTags('trabajadores')
 export class WorkersController {
   constructor(private readonly workersService: WorkersService) {}
-
+  
   @Post()
   create(@Body() dto: CreateWorkerDto) {
     return this.workersService.create(dto);
@@ -23,16 +26,16 @@ export class WorkersController {
 
   @Get()
   findAll() {
-    return this.workersService.findAll();
+    // return this.workersService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.workersService.findOne(id);
+  findOne(@Param('id', ParseIntPipe) id: Trabajador["id"]) {
+    // return this.workersService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateWorkerDto) {
+  update(@Param('id', ParseIntPipe) id: Trabajador["id"], @Body() dto: UpdateWorkerDto) {
     return this.workersService.update(id, dto);
   }
 
