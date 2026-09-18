@@ -1,21 +1,23 @@
-import { IsString } from 'class-validator';
-import { Optional } from '@nestjs/common';
+import { IsString, IsOptional } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 export class UpdateWorkerDto {
   @ApiPropertyOptional({
     description: 'Nombre(s) del trabajador',
     example: 'Miguel Ohara',
   })
-  @Optional()
+  @IsOptional()
   @IsString()
+  @Transform(({ value }) => value?.trim())
   name?: string;
 
   @ApiPropertyOptional({
     description: 'Apellido(s) del trabajador',
     example: 'De La Puerta',
   })
-  @Optional()
+  @IsOptional()
   @IsString()
+  @Transform(({ value }) => value?.trim())
   lastName?: string;
 }

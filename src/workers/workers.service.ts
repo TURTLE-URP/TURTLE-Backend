@@ -1,24 +1,25 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateWorkerDto } from './dto/create-worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { UsersService } from '@src/users/users.service';
-import { plainToInstance } from 'class-transformer';
 import { CreateWorkerResponse } from './entities/create-worker-response.entity';
+import { PrismaService } from '@src/prisma/prisma.service';
+import { WorkerResponseEntity } from './entities/worker-response.entity';
+import { toResponse } from '@src/common/utils/serializer.util';
+import { UpdateActivoDto } from './dto/update-activo.dto';
 
 @Injectable()
 export class WorkersService {
   constructor(
-    // @Inject(PrismaService) private readonly prisma: PrismaService,
+    @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(UsersService) private readonly usersService: UsersService,
   ) {}
 
-  async create(dto: CreateWorkerDto) {
+  async create(dto: CreateWorkerDto): Promise<CreateWorkerResponse> {
     const workerUserWithPassword =
       await this.usersService.createUsuarioTrabajador(dto);
 
-    return plainToInstance(CreateWorkerResponse, workerUserWithPassword, {
-      excludeExtraneousValues: true,
-    });
+    return toResponse(CreateWorkerResponse, workerUserWithPassword);
   }
 
   //   async findAll() {
@@ -37,7 +38,49 @@ export class WorkersService {
   //     return worker;
   //   }
 
-  async update(id: number, dto: UpdateWorkerDto) {}
+  async update(
+    id: number,
+    dto: UpdateWorkerDto,
+  ): Promise<WorkerResponseEntity> {
+    const worker = this.prisma.usuario.findFirst({
+      where: { id, tipo_usuario: 'trabajador', deleted_at: null },
+      include: { trabajador: true },
+    });
+
+    if (!worker) {
+      throw new NotFoundException('Trabajador no encontrado.');
+    }
+
+    const updatedWorker = await this.prisma.usuario.update({
+      where: { id },
+      data: {
+        updated_at: new Date(),
+        trabajador: { update: { nombre: dto.name, apellido: dto.lastName } },
+      },
+      include: { trabajador: true },
+    });
+
+    return toResponse(WorkerResponseEntity, updatedWorker);
+  }
+
+  async updateActivo(id: number, dto: UpdateActivoDto) {
+    const worker = await this.prisma.usuario.findFirst({
+      where: { id, tipo_usuario: 'trabajador', deleted_at: null },
+      include: { trabajador: true },
+    });
+
+    if (!worker) throw new NotFoundException(`Trabajador no encontrado.`);
+
+    const actualizado = await this.prisma.usuario.update({
+      where: { id },
+      data: {
+        updated_at: new Date(),
+        trabajador: { update: { activo: dto.activo } },
+      },
+      include: { trabajador: true },
+    });
+    return toResponse(WorkerResponseEntity, actualizado);
+  }
 
   async remove(id: number) {
     return this.usersService.remove(id);

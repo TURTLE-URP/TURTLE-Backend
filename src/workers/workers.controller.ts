@@ -1,8 +1,10 @@
-import { Controller, HttpCode } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
@@ -20,6 +22,8 @@ import { CreateWorkerDto } from './dto/create-worker.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { Trabajador } from '@prisma/client';
 import { CreateWorkerResponse } from './entities/create-worker-response.entity';
+import { WorkerResponseEntity } from './entities/worker-response.entity';
+import { UpdateActivoDto } from './dto/update-activo.dto';
 
 @Controller('workers')
 @ApiTags('Trabajadores')
@@ -27,7 +31,6 @@ export class WorkersController {
   constructor(private readonly workersService: WorkersService) {}
 
   @Post()
-  @HttpCode(201)
   @ApiOperation({
     summary:
       'Endpoint para registrar trabajadores, devuelve el trabajador creado.',
@@ -56,7 +59,33 @@ export class WorkersController {
     // return this.workersService.findOne(id);
   }
 
+  @Patch(':id/activo')
+  @ApiOperation({
+    summary:
+      'Endpoint para activar/desactivar trabajadores, devuelve el trabajador actualizado.',
+  })
+  @ApiOkResponse({
+    type: WorkerResponseEntity,
+    description: 'Datos del trabajador actualizados correctamente.',
+  })
+  @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
+  updateActivo(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateActivoDto,
+  ) {
+    return this.workersService.updateActivo(id, dto);
+  }
+
   @Patch(':id')
+  @ApiOperation({
+    summary:
+      'Endpoint para actualizar trabajadores, devuelve el trabajador actualizado.',
+  })
+  @ApiOkResponse({
+    type: WorkerResponseEntity,
+    description: 'Datos del trabajador actualizados correctamente.',
+  })
+  @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
   update(
     @Param('id', ParseIntPipe) id: Trabajador['id'],
     @Body() dto: UpdateWorkerDto,
