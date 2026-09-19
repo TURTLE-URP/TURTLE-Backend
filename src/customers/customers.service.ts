@@ -34,7 +34,7 @@ export class CustomersService {
     return customer;
   }
 
-  async remove(id: number) {
-    return this.usersService.remove(id);
+  async remove(id: number, deletedBy: number) {
+    return this.usersService.remove(id, deletedBy);
   }
 }

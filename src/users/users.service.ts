@@ -94,12 +94,12 @@ export class UsersService {
 
   async remove(userId: number, deletedBy: number) {
     const existing = await this.prisma.usuario.findFirst({
-      where: { id: userId, tipo_usuario: 'trabajador', deleted_at: null },
-      include: { trabajador: true },
+      where: { id: userId, deleted_at: null },
+      include: { trabajador: true, cliente: true },
     });
 
-    if (!existing?.trabajador) {
-      throw new NotFoundException('Trabajador no encontrado.');
+    if (!existing || (!existing.trabajador && !existing.cliente)) {
+      throw new NotFoundException('Usuario no encontrado.');
     }
 
     const now = new Date();
@@ -109,11 +109,13 @@ export class UsersService {
         deleted_at: now,
         updated_at: now,
         deleted_by: deletedBy,
-        trabajador: { update: { activo: false } },
+        ...(existing.trabajador
+          ? { trabajador: { update: { activo: false } } }
+          : {}),
       },
     });
 
-    return { id: userId, message: `Trabajador #${userId} eliminado.` };
+    return { id: userId, message: `Usuario #${userId} eliminado.` };
   }
 
   private async checkUserExists(email: Usuario['email']) {

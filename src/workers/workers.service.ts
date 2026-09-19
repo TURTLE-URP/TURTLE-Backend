@@ -83,6 +83,15 @@ export class WorkersService {
   }
 
   async remove(id: number, deletedBy: number) {
+    const worker = await this.prisma.usuario.findFirst({
+      where: { id, tipo_usuario: 'trabajador', deleted_at: null },
+      include: { trabajador: true },
+    });
+
+    if (!worker?.trabajador) {
+      throw new NotFoundException('Trabajador no encontrado.');
+    }
+
     return this.usersService.remove(id, deletedBy);
   }
 }

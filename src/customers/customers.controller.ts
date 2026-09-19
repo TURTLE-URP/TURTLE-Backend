@@ -11,7 +11,7 @@ import {
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { ApiTags } from '@nestjs/swagger';
-import { Cliente_Digital } from '@prisma/client';
+import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
 
 @Controller('api/customers')
 @ApiTags('clientes')
@@ -37,7 +37,10 @@ export class CustomersController {
   }
 
   @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.customersService.remove(id);
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() deletedBy: number,
+  ) {
+    return this.customersService.remove(id, deletedBy);
   }
 }
