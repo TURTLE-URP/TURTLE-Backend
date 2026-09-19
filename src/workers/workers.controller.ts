@@ -1,12 +1,15 @@
 import { Controller } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import {
   Get,
@@ -29,6 +32,8 @@ import { Roles } from '@src/auth/decorators/roles.decorator';
 
 @Controller('workers')
 @ApiTags('Trabajadores')
+@ApiBearerAuth()
+@Roles('administrador', 'jefe')
 export class WorkersController {
   constructor(private readonly workersService: WorkersService) {}
 
@@ -47,24 +52,27 @@ export class WorkersController {
   @ApiConflictResponse({
     description: 'Correo ya registrado en el sistema.',
   })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   create(@Body() dto: CreateWorkerDto) {
     return this.workersService.create(dto);
   }
 
   @Get()
-  @Roles('administrador', 'jefe')
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   findAll() {
     // return this.workersService.findAll();
   }
 
   @Get(':id')
-  @Roles('administrador', 'jefe')
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   findOne(@Param('id', ParseIntPipe) id: Trabajador['id']) {
     // return this.workersService.findOne(id);
   }
 
   @Patch(':id/activo')
-  @Roles('administrador', 'jefe')
   @ApiOperation({
     summary:
       'Endpoint para activar/desactivar trabajadores, devuelve el trabajador actualizado.',
@@ -74,6 +82,8 @@ export class WorkersController {
     description: 'Datos del trabajador actualizados correctamente.',
   })
   @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   updateActivo(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateActivoDto,
@@ -91,6 +101,8 @@ export class WorkersController {
     description: 'Datos del trabajador actualizados correctamente.',
   })
   @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   update(
     @Param('id', ParseIntPipe) id: Trabajador['id'],
     @Body() dto: UpdateWorkerDto,
@@ -103,9 +115,10 @@ export class WorkersController {
     summary:
       'Endpoint para eliminar trabajadores (baja lógica), devuelve confirmación.',
   })
-  @Roles('administrador', 'jefe')
   @ApiOkResponse({ description: 'Trabajador eliminado (baja lógica).' })
   @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   remove(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUserId() deletedBy: number,

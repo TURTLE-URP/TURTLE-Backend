@@ -3,7 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();
@@ -15,6 +14,15 @@ async function bootstrap() {
       'Documentación de los endpoints de la API utilizando Swagger.',
     )
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Pega el access_token del login',
+      },
+      'bearer',
+    )
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, config);
