@@ -58,6 +58,8 @@ npm run test
 | `npm run test` | Tests unitarios (Jest) |
 | `npm run test:cov` | Tests con cobertura |
 | `npm run test:e2e` | Tests end-to-end |
+| `npm run db:seed` | Seed demo idempotente (`tsx prisma/seed.ts`; credenciales en [07 — API](./07-api.md)) |
+| `npm run db:unseed` | Vacía las 33 tablas (`TRUNCATE ... RESTART IDENTITY`), migraciones intactas, bloqueado en prod |
 
 ---
 

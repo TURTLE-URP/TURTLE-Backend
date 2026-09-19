@@ -1,12 +1,22 @@
 # 03 — Arquitectura de módulos
 
 ## Árbol de módulos
-
 ```mermaid
-graph TD
+graph LR
     AppModule --> ConfigModule
     AppModule --> PrismaModule
     AppModule --> HealthModule
+    AppModule --> AuthModule
+    AppModule --> UsersModule
+    AppModule --> WorkersModule
+    AppModule --> CustomersModule
+    AppModule --> TablesModule
+    AppModule --> OrdersModule
+    AppModule --> PaymentsModule
+    AppModule --> ComandasModule
+    AppModule --> MenuItemsModule
+    AppModule --> SupplyOrdersModule
+    AppModule --> AuditModule
     AppModule --> IntegrationsModule
     IntegrationsModule --> RucModule
     IntegrationsModule --> DniModule
@@ -16,11 +26,31 @@ graph TD
     style ConfigModule fill:#1f6feb,stroke:#58a6ff,color:#fff
     style PrismaModule fill:#238636,stroke:#3fb950,color:#fff
     style HealthModule fill:#9e6a03,stroke:#d29922,color:#fff
+    style AuthModule fill:#d29922,stroke:#f0c000,color:#fff
     style IntegrationsModule fill:#d29922,stroke:#f0c000,color:#fff
     style RucModule fill:#58a6ff,stroke:#79c0ff,color:#fff
     style DniModule fill:#58a6ff,stroke:#79c0ff,color:#fff
     style CloudinaryModule fill:#58a6ff,stroke:#79c0ff,color:#fff
 ```
+---
+
+## Módulos de dominio
+
+| Módulo | Responsabilidad | Prefijo HTTP |
+|---|---|---|
+| `AuthModule` | Login trabajador (JWT), guards globales | `/auth` |
+| `UsersModule` | Identidad: `Usuario` por email/tipo (sin controller) | — |
+| `WorkersModule` | Gestión de trabajadores (CRUD, activar, baja) | `/workers` |
+| `CustomersModule` | Clientes digitales | `api/customers` |
+| `TablesModule` | Mesas del local | `api/tables` |
+| `OrdersModule` | Pedidos | `api/orders` |
+| `PaymentsModule` | Pagos + detalles | `api/payments` |
+| `ComandasModule` | Comandas, cocina y movimientos | `api/comandas` |
+| `MenuItemsModule` | Platos del menú (solo lectura) | `api/menu-items` |
+| `SupplyOrdersModule` | Órdenes de abasto + métricas | `/supply-orders` |
+| `AuditModule` | Auditoría del sistema | `api/audit` |
+
+Detalle de endpoints en [07 — API](./07-api.md). Reglas transversales (guards, roles, entities) en [08 — Convenciones](./08-convenciones.md).
 
 ---
 
@@ -30,15 +60,32 @@ graph TD
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-    PrismaModule,
+    PrismaModule,       // global: PrismaService en toda la app
     HealthModule,
-    IntegrationsModule,
+    AuthModule,         // + JwtAuthGuard / RolesGuard globales (APP_GUARD)
+    UsersModule,        // identidad (sin controller)
+    WorkersModule,
+    CustomersModule,
+    TablesModule,
+    OrdersModule,
+    PaymentsModule,
+    ComandasModule,
+    MenuItemsModule,
+    SupplyOrdersModule,
+    AuditModule,
+    IntegrationsModule, // ruc + dni + cloudinary
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_GUARD, useClass: JwtAuthGuard }, // auth en todo salvo @Public()
+    { provide: APP_GUARD, useClass: RolesGuard },   // @Roles() por controller/método
+  ],
 })
 export class AppModule {}
 ```
+
+> Los guards son globales: toda ruta exige JWT salvo `@Public()` (`POST /auth/login`, `/health`), y las rutas con `@Roles()` exigen además el rol (ver [convenciones](./08-convenciones.md)).
 
 ---
 
@@ -58,12 +105,12 @@ export class AppModule {}
 
 ## HealthModule
 
-Expone `GET /health` con dos indicadores:
+Expone `GET /health` (público) con dos niveles:
 
-| Indicador | Qué verifica |
-|---|---|
-| `nestjs-docs` | Conectividad HTTP externa |
-| `database` | Conexión a PostgreSQL |
+| Endpoint | Indicador | Qué verifica |
+|---|---|---|
+| `GET /health` (readiness) | `database` | Ping PostgreSQL (timeout 2 s) |
+| `GET /health/live` (liveness) | `memory_heap` | Heap < 300 MB, sin I/O |
 
 ---
 

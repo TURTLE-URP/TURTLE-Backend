@@ -16,26 +16,32 @@
 
 ## Dependencias clave
 
-### Producción (14)
+### Producción
 
 ```json
-"@nestjs/common"       // Decoradores, guards, pipes
-"@nestjs/config"       // Variables de entorno
-"@nestjs/core"         // IoC container, módulos
+"@nestjs/common"         // Decoradores, guards, pipes
+"@nestjs/config"         // Variables de entorno
+"@nestjs/core"           // IoC container, módulos
+"@nestjs/jwt"            // Firma/verificación de JWT (login trabajadores)
+"@nestjs/mapped-types"   // PartialType para Update DTOs
 "@nestjs/platform-express" // Servidor HTTP Express
-"@nestjs/terminus"     // Health checks
-"@nestjs/axios"        // HTTP client (integraciones + health)
-"@prisma/client"       // Cliente generado por Prisma
-"@prisma/adapter-pg"   // Adaptador PostgreSQL
-"pg"                   // Driver PostgreSQL
-"axios"                // HTTP client (integraciones)
-"cloudinary"           // SDK de Cloudinary
-"multer"               // Upload de archivos (multipart)
-"reflect-metadata"     // Decoradores en tiempo de ejecución
-"rxjs"                 // Programación reactiva
+"@nestjs/swagger"        // OpenAPI + Swagger UI
+"@nestjs/terminus"       // Health checks
+"@nestjs/axios"          // HTTP client (integraciones + health)
+"@prisma/client"         // Cliente generado por Prisma
+"@prisma/adapter-pg"     // Adaptador PostgreSQL
+"pg"                     // Driver PostgreSQL
+"axios"                  // HTTP client (integraciones)
+"bcryptjs"               // Hash de passwords (login + seed)
+"class-transformer"      // @Transform, @Expose/@Type, toResponse*
+"class-validator"        // @IsEmail, @IsEnum... (ValidationPipe global)
+"cloudinary"             // SDK de Cloudinary
+"multer"                 // Upload de archivos (multipart)
+"reflect-metadata"       // Decoradores en tiempo de ejecución
+"rxjs"                   // Programación reactiva
 ```
 
-### Desarrollo (26)
+### Desarrollo
 
 ```json
 "@nestjs/cli"            // Generar módulos, controladores
@@ -43,11 +49,12 @@
 "@nestjs/testing"        // Test utilities
 "@eslint/eslintrc"       // Configuración de ESLint
 "@eslint/js"             // Reglas base de ESLint
+"@types/*"               // Tipos (bcryptjs, express, jest, node, pg...)
 "typescript"             // Compilador TS
 "typescript-eslint"      // ESLint + TypeScript
 "ts-jest"                // Jest + TypeScript
 "ts-node"                // Ejecutar TS directamente
-"ts-loader"              // TypeScript + Webpack
+"tsx"                    // Runner TS (seed: npm run db:seed)
 "tsconfig-paths"         // Resolución de path aliases
 "prisma"                 // CLI de Prisma
 "jest + supertest"       // Tests unitarios y E2E

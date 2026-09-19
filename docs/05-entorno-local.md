@@ -2,6 +2,8 @@
 
 Docker se usa **solo para la base de datos**. El backend corre nativo en tu máquina (`npm run start:dev`): el type-check, el debugger, los tests y el cliente Prisma generado viven en el host.
 
+> Si usas **Podman** en vez de Docker, sustituye `docker compose` por `podman compose` en todos los comandos de esta guía (el `compose.yaml` es compatible).
+
 ---
 
 ## Qué corre en Docker

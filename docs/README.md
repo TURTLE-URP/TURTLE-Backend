@@ -58,11 +58,23 @@ flowchart LR
 ```
 src/
 ├── main.ts                    # Entry point
-├── app.module.ts              # Módulo raíz
+├── app.module.ts              # Módulo raíz (+ guards globales)
 ├── app.controller.ts          # GET /
 ├── app.service.ts             # Servicio raíz
 ├── prisma/                    # Conexión a BD (global)
 ├── health/                    # Health checks (Terminus)
+├── auth/                      # Login JWT + guards + decorators
+├── users/                     # Identidad (sin controller)
+├── workers/                   # Gestión de trabajadores
+├── customers/                 # Clientes digitales
+├── tables/                    # Mesas
+├── orders/                    # Pedidos
+├── payments/                  # Pagos
+├── comandas/                  # Comandas y cocina
+├── menu-items/                # Platos (lectura)
+├── supply-orders/             # Abastecimiento
+├── audit/                     # Auditoría
+├── common/                    # DTOs, entities y utils compartidos
 └── integrations/              # Proveedores externos
     ├── ruc/                   # OpenRUC (SUNAT)
     ├── dni/                   # ApiInti (RENIEC)

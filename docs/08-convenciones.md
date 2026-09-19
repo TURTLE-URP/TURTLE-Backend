@@ -7,6 +7,21 @@
 * **`dto/`** — inputs (`@Body()`, `@Query()`): llevan validadores de `class-validator` y se chequean con el `ValidationPipe` global.
 * **`entities/`** — outputs construidos en el servicio: llevan `@ApiProperty()` para Swagger, jamás validadores.
 
+## Convenciones adoptadas (auth + trabajadores)
+
+Reglas que rigen desde el módulo de trabajadores y se extienden a los siguientes:
+
+* **Emails siempre en minúsculas para auth.** `@Transform(({ value }) => value?.trim().toLowerCase())` en los DTOs + `trim().toLowerCase()` defensivo en el service. El usuario puede escribir mayúsculas, el backend compara/guarda en minúsculas (evita duplicados `Mozo@` vs `mozo@` con el `@unique` case-sensitive de Postgres).
+* **Entities con whitelist.** Toda entity de salida solo declara lo que sí sale, con `@Expose()`. Serialización siempre vía `toResponse()` / `toResponseMany()` / `toPaginatedResponse()` (`src/common/utils/serializer.util.ts`), que fuerzan `excludeExtraneousValues: true`. `password_hash` y campos internos ni se declaran: omitir = ocultar. `@Type(() => X)` es obligatorio en propiedades anidadas/arrays y en coerciones query-string → `number`/`boolean`.
+* **Respuestas paginadas genéricas.** `PaginatedResponse(RecursoEntity, 'descripción')` (`src/common/entities/paginated-response.entity.ts`, factory mixin — no clase genérica directa, que rompería `@Type`/Swagger en runtime). Cada listado expone `XxxPaginatedResponse extends PaginatedResponse(...)`. No usar `toResponseMany` en flujos paginados (el `@Type` del wrapper ya mapea `data`); reservarlo para listas simples sin `meta` (catálogos, dropdowns).
+* **Queries paginadas por extensión.** `FindXxxQueryDto extends PaginationQueryDto` (`page`/`limit` genéricos en `src/common/dto/`) + filtros propios (`search`, `role`, `activo`...). `@Type(() => Number)` convierte `?page="2"` a número antes de validar.
+* **Actor auditor siempre requerido en endpoints.** `@CurrentUser()` / `@CurrentUserId()` (`src/auth/decorators/`) son estrictos: lanzan `401` si no hay user/`sub` válido. Nunca `@Req()` manual para el actor. `created_by/updated_by/deleted_by` se exigen en baja/actualización por endpoint (la columna `deleted_by` es nullable solo porque vale `NULL` en filas vivas).
+* **Autorización a nivel de controller.** `@Roles('administrador', 'jefe')` + `@ApiBearerAuth()` en la clase (el `RolesGuard`/`JwtAuthGuard` ya son globales vía `APP_GUARD`). `@Roles` en método solo para excepciones (sobrescribe, no suma). Endpoints con bearer llevan `@ApiUnauthorizedResponse` + `@ApiForbiddenResponse`.
+* **Baja lógica, nunca borrado físico.** `DELETE` = `deleted_at/updated_at = now()` + `deleted_by = actor del JWT` + `trabajador.activo = false`. `activo = false` es bloqueo temporal reversible (`PATCH /:id/activo`); `deleted_at != null` es baja definitiva. El login filtra `deleted_at: null` + `activo: true`.
+* **Claves autogeneradas.** `POST /workers` no recibe password: el sistema genera 12 chars, guarda el hash y devuelve `plainPassword` una vez en `CreateWorkerResponse` (TODO: SES/correo y dejar de exponerlo en prod). `PATCH /:id` solo toca `name/lastName` (+ `updated_at` manual, el schema no usa `@updatedAt`); rol, email y password van por flujos dedicados.
+* **Límites de módulos.** `UsersService` = identidad (búsquedas por `email`, `tipo_usuario`, `deleted_at`, creación con hash). `WorkersService` = gestión por `id` (CRUD, paginado, activar, baja). `AuthService` solo habla con `UsersService`, jamás Prisma directo. Los ids de Prisma son `Int` (nada de `BigInt` en fixtures/specs).
+* **Códigos.** `201` crear (`@ApiCreatedResponse`), `200` leer/actualizar/borrar con body (`@ApiOkResponse`), `400` DTO, `409` duplicado, `404` inexistente/eliminado, `401` sin token/actor, `403` rol insuficiente.
+
 ### Sin comentarios
 
 El código fuente no lleva comentarios. La documentación vive en `docs/`.
@@ -69,6 +84,32 @@ lsof -i :3000
 # Mata el proceso y relanza
 kill <PID>
 npm run start:dev
+```
+
+### `23505 Usuario_pkey` al crear (secuencia desincronizada) — histórico
+
+**Historia**: el historial pre-squash (detour bigint→int) dejó **dos secuencias** (`Usuario_id_seq` huérfana y `Usuario_id_seq1`, dueña real) y el seed insertaba ids explícitos sincronizando la equivocada vía `pg_get_serial_sequence`. Resuelto de raíz con baseline único + seed sin ids explícitos (ver convenciones arriba): hoy no hay `setval` que mantener.
+
+Si el error reaparece (p. ej. inserts manuales con id literal por SQL), el diagnóstico y fix puntual siguen valiendo:
+
+**Diagnóstico** (contra la BD que usa la API):
+
+```sql
+-- ¿cuál secuencia es la dueña real?
+SELECT s.relname AS owned_seq FROM pg_attribute a
+JOIN pg_class t ON t.oid = a.attrelid
+JOIN pg_depend d ON d.refobjid = a.attrelid AND d.refobjsubid = a.attnum AND d.deptype = 'i'
+JOIN pg_class s ON s.oid = d.objid
+WHERE t.relname = 'Usuario' AND a.attname = 'id';
+-- ¿está sincronizada? last_value debe ser >= MAX(id)
+SELECT last_value FROM "Usuario_id_seq1";
+SELECT MAX(id) FROM "Usuario";
+```
+
+**Fix puntual** (sin resembrar):
+
+```sql
+SELECT setval('"Usuario_id_seq1"', COALESCE((SELECT MAX(id) FROM "Usuario"), 1));
 ```
 
 ### Prisma no encuentra el schema o falta el cliente generado

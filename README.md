@@ -47,7 +47,7 @@
 
 - **Node.js** `24.15.0` (`nvm use`)
 - **npm** ≥ 10
-- **Docker** + **Docker Compose** (solo para PostgreSQL)
+- **Docker** + **Docker Compose** (solo para PostgreSQL; con Podman usa `podman compose`)
 
 ### Pasos
 
@@ -67,7 +67,10 @@ docker compose up -d
 # 4. Aplicar migraciones
 npx prisma migrate dev
 
-# 5. Correr el servidor (nativo, con hot-reload)
+# 5. Sembrar datos demo (credenciales en docs/07-api.md)
+npm run db:seed
+
+# 6. Correr el servidor (nativo, con hot-reload)
 npm run start:dev
 ```
 
@@ -88,6 +91,8 @@ La API queda en [http://localhost:3000](http://localhost:3000), readiness en [ht
 | `npm run test` | Tests unitarios |
 | `npm run test:e2e` | Tests end-to-end |
 | `npm run test:cov` | Tests con cobertura |
+| `npm run db:seed` | Seed demo idempotente |
+| `npm run db:unseed` | Vacía las tablas (dev, bloqueado en prod) |
 | `npm run lint` | ESLint con autocorrección |
 | `npm run format` | Formato con Prettier |
 
