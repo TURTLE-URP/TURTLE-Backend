@@ -19,12 +19,15 @@ import {
   Param,
   ParseIntPipe,
   Body,
+  Query,
 } from '@nestjs/common';
 import { WorkersService } from './workers.service';
 import { CreateWorkerDto } from './dto/create-worker.dto';
+import { FindWorkersQueryDto } from './dto/find-workers-query.dto';
 import { UpdateWorkerDto } from './dto/update-worker.dto';
 import { Trabajador } from '@prisma/client';
 import { CreateWorkerResponse } from './entities/create-worker-response.entity';
+import { PaginatedWorkersResponse } from './entities/paginated-workers-response.entity';
 import { WorkerResponseEntity } from './entities/worker-response.entity';
 import { UpdateActivoDto } from './dto/update-activo.dto';
 import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
@@ -59,17 +62,32 @@ export class WorkersController {
   }
 
   @Get()
+  @ApiOperation({
+    summary: 'Lista trabajadores con paginación y filtros.',
+  })
+  @ApiOkResponse({
+    type: PaginatedWorkersResponse,
+    description: 'Página de trabajadores.',
+  })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
-  findAll() {
-    // return this.workersService.findAll();
+  findAll(@Query() query: FindWorkersQueryDto) {
+    return this.workersService.findAll(query);
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Obtiene un trabajador por id.',
+  })
+  @ApiOkResponse({
+    type: WorkerResponseEntity,
+    description: 'Trabajador encontrado.',
+  })
+  @ApiNotFoundResponse({ description: 'Trabajador no encontrado.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   findOne(@Param('id', ParseIntPipe) id: Trabajador['id']) {
-    // return this.workersService.findOne(id);
+    return this.workersService.findOne(id);
   }
 
   @Patch(':id/activo')

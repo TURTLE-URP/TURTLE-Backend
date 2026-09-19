@@ -6,6 +6,8 @@ describe('WorkersController', () => {
   let controller: WorkersController;
   let service: {
     create: jest.Mock;
+    findAll: jest.Mock;
+    findOne: jest.Mock;
     update: jest.Mock;
     updateActivo: jest.Mock;
     remove: jest.Mock;
@@ -14,6 +16,8 @@ describe('WorkersController', () => {
   beforeEach(async () => {
     service = {
       create: jest.fn(),
+      findAll: jest.fn(),
+      findOne: jest.fn(),
       update: jest.fn(),
       updateActivo: jest.fn(),
       remove: jest.fn(),
@@ -43,6 +47,23 @@ describe('WorkersController', () => {
     await controller.create(dto);
 
     expect(service.create).toHaveBeenCalledWith(dto);
+  });
+
+  it('findAll pasa el query al service', async () => {
+    const query = { page: 2, limit: 5, search: 'mozo' } as never;
+    service.findAll.mockResolvedValue({ data: [], meta: {} });
+
+    await controller.findAll(query);
+
+    expect(service.findAll).toHaveBeenCalledWith(query);
+  });
+
+  it('findOne delega al service', async () => {
+    service.findOne.mockResolvedValue({ id: 3 });
+
+    await controller.findOne(3);
+
+    expect(service.findOne).toHaveBeenCalledWith(3);
   });
 
   it('update delega al service', async () => {

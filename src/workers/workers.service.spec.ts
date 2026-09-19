@@ -7,7 +7,12 @@ import { WorkersService } from './workers.service';
 describe('WorkersService', () => {
   let service: WorkersService;
   let prisma: {
-    usuario: { findFirst: jest.Mock; update: jest.Mock };
+    usuario: {
+      findFirst: jest.Mock;
+      findMany: jest.Mock;
+      count: jest.Mock;
+      update: jest.Mock;
+    };
   };
   let users: {
     createUsuarioTrabajador: jest.Mock;
@@ -30,7 +35,12 @@ describe('WorkersService', () => {
 
   beforeEach(async () => {
     prisma = {
-      usuario: { findFirst: jest.fn(), update: jest.fn() },
+      usuario: {
+        findFirst: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+        update: jest.fn(),
+      },
     };
     users = {
       createUsuarioTrabajador: jest.fn(),
@@ -135,6 +145,61 @@ describe('WorkersService', () => {
     await expect(
       service.updateActivo(99, { activo: false }),
     ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('findOne devuelve entity y 404 si no existe', async () => {
+    prisma.usuario.findFirst.mockResolvedValue(usuarioDb);
+
+    const result = await service.findOne(3);
+
+    expect(result).toMatchObject({
+      id: 3,
+      email: 'mozo@turtle.pe',
+      trabajador: { nombre: 'Mozo' },
+    });
+
+    prisma.usuario.findFirst.mockResolvedValueOnce(null);
+    await expect(service.findOne(99)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  it('findAll pagina con defaults y arma meta', async () => {
+    prisma.usuario.count.mockResolvedValue(25);
+    prisma.usuario.findMany.mockResolvedValue([usuarioDb]);
+
+    const result = await service.findAll({});
+
+    expect(prisma.usuario.count).toHaveBeenCalled();
+    expect(prisma.usuario.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 0, take: 10 }),
+    );
+    expect(result.meta).toEqual({
+      total: 25,
+      page: 1,
+      limit: 10,
+      totalPages: 3,
+    });
+    expect(result.data).toHaveLength(1);
+  });
+
+  it('findAll aplica filtros search/role/activo', async () => {
+    prisma.usuario.count.mockResolvedValue(1);
+    prisma.usuario.findMany.mockResolvedValue([usuarioDb]);
+
+    await service.findAll({
+      search: 'mozo',
+      role: 'mozo',
+      activo: true,
+      page: 2,
+      limit: 5,
+    } as never);
+
+    expect(prisma.usuario.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ skip: 5, take: 5 }),
+    );
+    const where = prisma.usuario.findMany.mock.calls[0][0].where;
+    expect(JSON.stringify(where)).toContain('mozo');
   });
 
   it('remove delega a UsersService con deletedBy', async () => {
