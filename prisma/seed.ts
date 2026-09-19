@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { hashSync } from 'bcryptjs';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -12,44 +13,55 @@ const pool = new Pool({ connectionString });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const ADMIN_ID = 1;
 const now = () => new Date();
+
+// Solo desarrollo: jamás sembrar usuarios de prueba en producción.
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Seed bloqueado en producción');
+}
+
+// Clave única para los 4 trabajadores seed (solo dev, ver docs/07-api.md).
+// Se hashea una vez: bcrypt.compare del login jamás aceptaría texto plano.
+const SEED_PASSWORD = 'changeme123';
+const SEED_ROUNDS = Number(process.env.BCRYPT_ROUNDS ?? 10);
+const passwordHash = hashSync(SEED_PASSWORD, SEED_ROUNDS);
 
 async function main() {
   // ---------- Usuarios (primero: su id se usa como created_by) ----------
+  // Sin ids explícitos: la BD los genera y se reutilizan los retornados.
+  // Así la secuencia jamás se desincroniza y no hay setval que mantener.
   const admin = await prisma.usuario.upsert({
-    where: { id: ADMIN_ID },
+    where: { email: 'admin@turtle.pe' },
     update: {},
     create: {
-      id: ADMIN_ID,
       email: 'admin@turtle.pe',
       tipo_usuario: 'trabajador',
       created_at: now(),
     },
   });
+  const ADMIN_ID = admin.id;
   await prisma.trabajador.upsert({
     where: { id: admin.id },
-    update: {},
+    update: { password_hash: passwordHash, activo: true },
     create: {
       id: admin.id,
       nombre: 'Admin',
       apellido: 'Turtle',
-      password_hash: 'changeme',
+      password_hash: passwordHash,
       rol: 'administrador',
       activo: true,
     },
   });
 
-  for (const [id, email, nombre, rol] of [
-    [2, 'jefe@turtle.pe', 'Jefe', 'jefe'],
-    [3, 'mozo@turtle.pe', 'Mozo', 'mozo'],
-    [4, 'cocinero@turtle.pe', 'Cocinero', 'cocinero'],
+  for (const [email, nombre, rol] of [
+    ['jefe@turtle.pe', 'Jefe', 'jefe'],
+    ['mozo@turtle.pe', 'Mozo', 'mozo'],
+    ['cocinero@turtle.pe', 'Cocinero', 'cocinero'],
   ] as const) {
     const user = await prisma.usuario.upsert({
-      where: { id },
+      where: { email },
       update: {},
       create: {
-        id,
         email,
         tipo_usuario: 'trabajador',
         created_at: now(),
@@ -57,12 +69,12 @@ async function main() {
     });
     await prisma.trabajador.upsert({
       where: { id: user.id },
-      update: {},
+      update: { password_hash: passwordHash, activo: true },
       create: {
         id: user.id,
         nombre,
         apellido: 'Demo',
-        password_hash: 'changeme',
+        password_hash: passwordHash,
         rol,
         activo: true,
       },
@@ -70,10 +82,9 @@ async function main() {
   }
 
   const demoClient = await prisma.usuario.upsert({
-    where: { id: 5 },
+    where: { email: 'cliente@turtle.pe' },
     update: {},
     create: {
-      id: 5,
       email: 'cliente@turtle.pe',
       tipo_usuario: 'cliente_digital',
       created_at: now(),
@@ -381,16 +392,13 @@ async function main() {
     },
   });
 
-  // Sincronizar secuencia: se insertaron ids explícitos (1-5) en "Usuario".
-  // Sin esto, el próximo insert con id por defecto colisionaría con id=1.
-  await prisma.$executeRawUnsafe(
-    `SELECT setval(pg_get_serial_sequence('"Usuario"', 'id'), COALESCE((SELECT MAX(id) FROM "Usuario"), 1))`,
-  );
-
   console.log('✅ Seed demo completo (idempotente, re-ejecutable)');
   console.log(
     `   almacenes: ${almacenPrincipal.codigo}, ${almacenCocina.codigo} · pedido: PED-0001`,
   );
+  console.log('   trabajadores seed (password: changeme123):');
+  console.log('     admin@turtle.pe · cocinero@turtle.pe');
+  console.log('     jefe@turtle.pe · mozo@turtle.pe');
 }
 
 main()
