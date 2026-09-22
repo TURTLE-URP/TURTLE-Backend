@@ -105,7 +105,7 @@ async function main() {
   async function unidad(
     nombre: string,
     abreviatura: string,
-    tipo: 'masa' | 'volumen',
+    tipo: 'masa' | 'volumen' | 'unidad',
     factor: string,
   ) {
     const existing = await prisma.unidad_Medida.findFirst({
@@ -120,6 +120,7 @@ async function main() {
   const kg = await unidad('Kilogramo', 'kg', 'masa', '1');
   const g = await unidad('Gramo', 'g', 'masa', '0.001');
   const litro = await unidad('Litro', 'L', 'volumen', '1');
+  const und = await unidad('Unidad', 'und', 'unidad', '1');
 
   // ---------- Insumos + medidas ----------
   async function insumo(codigo: string, nombre: string, unidadId: number) {
@@ -129,8 +130,6 @@ async function main() {
       create: {
         codigo,
         nombre,
-        stock_ideal: '100',
-        stock_min: '10',
         id_unidad_base: unidadId,
         created_at: now(),
         created_by: ADMIN_ID,
@@ -158,6 +157,7 @@ async function main() {
   const papa = await insumo('INS-PAPA', 'Papa amarilla', kg.id);
   const aceite = await insumo('INS-ACEITE', 'Aceite vegetal', litro.id);
   const sal = await insumo('INS-SAL', 'Sal de cocina', g.id);
+  const huevo = await insumo('INS-HUEVO', 'Huevo', und.id);
 
   const polloKg = await medida(pollo.id, 'Kilogramo', 'kg', '1');
   await medida(arroz.id, 'Kilogramo', 'kg', '1');
@@ -165,6 +165,7 @@ async function main() {
   const papaKg = await medida(papa.id, 'Kilogramo', 'kg', '1');
   const aceiteL = await medida(aceite.id, 'Litro', 'L', '1');
   const salG = await medida(sal.id, 'Gramo', 'g', '1');
+  await medida(huevo.id, 'Unidad', 'und', '1');
 
   // ---------- Almacenes ----------
   async function almacen(codigo: string, nombre: string, ubicacion: string) {
@@ -192,6 +193,34 @@ async function main() {
     'Almacén cocina',
     'Primer piso',
   );
+
+  // ---------- Stock por almacén (umbrales viven aquí, no en Insumo) ----------
+  async function stock(
+    almacenId: number,
+    insumoId: number,
+    min: string,
+    ideal: string,
+  ) {
+    const existing = await prisma.stock_Almacen.findFirst({
+      where: { id_almacen: almacenId, id_insumo: insumoId },
+    });
+    if (existing) return existing;
+    return prisma.stock_Almacen.create({
+      data: {
+        id_almacen: almacenId,
+        id_insumo: insumoId,
+        stock_actual: '0',
+        stock_min: min,
+        stock_ideal: ideal,
+        updated_at: now(),
+      },
+    });
+  }
+
+  for (const ins of [pollo, arroz, papa, aceite, sal, huevo]) {
+    await stock(almacenPrincipal.id, ins.id, '10', '100');
+    await stock(almacenCocina.id, ins.id, '5', '30');
+  }
 
   // ---------- Proveedor + producto ----------
   const proveedor = await prisma.proveedor.upsert({

@@ -72,6 +72,7 @@ enum proveedor_contacto_tipo {
 enum unidad_tipo {
   masa
   volumen
+  unidad
 }
 
 enum orden_estado {
@@ -308,8 +309,6 @@ model Insumo {
   id Int @id @default(autoincrement())
   codigo String @unique
   nombre String
-  stock_ideal Decimal @db.Decimal
-  stock_min Decimal @db.Decimal
   id_unidad_base Int
   created_at DateTime @default(now()) @db.Timestamp()
   created_by Int
@@ -513,6 +512,8 @@ model Stock_Almacen {
   id_almacen Int
   id_insumo Int
   stock_actual Decimal @db.Decimal
+  stock_min Decimal @db.Decimal
+  stock_ideal Decimal @db.Decimal
   updated_at DateTime @db.Timestamp()
 
   almacen Almacen @relation(fields: [id_almacen], references: [id])
