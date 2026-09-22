@@ -1,49 +1,61 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { pago_medio_pago } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
-  IsArray,
   ArrayMinSize,
+  IsArray,
+  IsEnum,
   IsInt,
   IsNumber,
   IsOptional,
   IsString,
   Min,
   ValidateNested,
-  IsEnum,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-// import { payment_method_type } from '@src/generated/prisma/client';
 
 export class CreatePaymentDetailDto {
+  @ApiProperty({ description: 'ID del plato', example: 1 })
   @IsInt()
   menuItemId!: number;
 
+  @ApiProperty({ example: 2, minimum: 1 })
   @IsInt()
   @Min(1)
   quantity!: number;
 
+  @ApiProperty({ example: 30.0, minimum: 0 })
   @IsNumber()
   @Min(0)
   subtotal!: number;
 
+  @ApiProperty({ description: 'IGV del detalle', example: 5.4, minimum: 0 })
   @IsNumber()
   @Min(0)
-  tax!: number;
+  igv!: number;
 }
 
 export class CreatePaymentDto {
+  @ApiProperty({ description: 'ID del pedido', example: 1 })
   @IsInt()
-  customerOrderId!: number;
+  pedidoId!: number;
 
-  // @IsEnum(payment_method_type)
-  // paymentMethod!: payment_method_type;
+  @ApiProperty({ enum: pago_medio_pago, example: pago_medio_pago.yape })
+  @IsEnum(pago_medio_pago)
+  medioPago!: pago_medio_pago;
 
+  @ApiProperty({ example: 52.86, minimum: 0 })
   @IsNumber()
   @Min(0)
-  amount!: number;
+  monto!: number;
 
+  @ApiPropertyOptional({
+    description: 'URL del comprobante (p. ej. Cloudinary)',
+  })
   @IsOptional()
   @IsString()
-  receiptUrl?: string;
+  urlComprobante?: string;
 
+  @ApiProperty({ type: [CreatePaymentDetailDto] })
   @ValidateNested({ each: true })
   @Type(() => CreatePaymentDetailDto)
   @IsArray()

@@ -1,59 +1,61 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { pago_medio_pago, Prisma } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
-// import { Prisma, payment_method_type } from '@src/generated/prisma/client';
 import { CreatePaymentDto } from './dto/create-payment.dto';
+import { UpdatePaymentDto } from './dto/update-payment.dto';
 import {
   CreatePaymentDetailOnlyDto,
   UpdatePaymentDetailDto,
 } from './dto/payment-detail.dto';
 
 const include = {
-  customer_order: {
+  pedido: {
     include: {
-      restaurant_table: true,
+      mesa: true,
     },
   },
-  payment_details: {
-    include: { menu_items: true },
+  detalles: {
+    include: { plato: true },
   },
 } as const;
 
 @Injectable()
 export class PaymentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
-  /*
   async create(dto: CreatePaymentDto) {
-    const order = await this.prisma.customer_order.findUnique({
-      where: { customer_order_id: dto.customerOrderId },
+    const pedido = await this.prisma.pedido.findFirst({
+      where: { id: dto.pedidoId, deleted_at: null },
     });
-    if (!order)
-      throw new NotFoundException(
-        `Orden #${dto.customerOrderId} no encontrada`,
-      );
+    if (!pedido) {
+      throw new NotFoundException(`Pedido #${dto.pedidoId} no encontrado`);
+    }
 
-    const menuItemIds = dto.details.map((d) => d.menuItemId);
-    const menuItems = await this.prisma.menu_items.findMany({
-      where: { menu_item_id: { in: menuItemIds } },
+    const menuItemIds = [...new Set(dto.details.map((d) => d.menuItemId))];
+    const menuItems = await this.prisma.platos_Menu.findMany({
+      where: { id: { in: menuItemIds }, deleted_at: null },
     });
-    if (menuItems.length !== menuItemIds.length)
+    if (menuItems.length !== menuItemIds.length) {
       throw new NotFoundException(
         'Uno o más ítems de menú no fueron encontrados',
       );
+    }
 
-    return this.prisma.payment.create({
+    return this.prisma.pago_Cliente.create({
       data: {
-        code: `P-${Date.now().toString(36).toUpperCase()}`,
-        customer_order_id: dto.customerOrderId,
-        payment_method: dto.paymentMethod,
-        amount: dto.amount,
-        receipt_url: dto.receiptUrl,
-        payment_details: {
+        codigo: `PAG-${Date.now().toString(36).toUpperCase()}`,
+        id_pedido: dto.pedidoId,
+        medio_pago: dto.medioPago,
+        monto: dto.monto,
+        url_comprobante: dto.urlComprobante,
+        detalles: {
           create: dto.details.map((detail) => ({
-            menu_item_id: detail.menuItemId,
-            quantity: detail.quantity,
+            id_menu_item: detail.menuItemId,
+            cantidad: detail.quantity,
             subtotal: detail.subtotal,
-            tax: detail.tax,
+            IGV: detail.igv,
           })),
         },
       },
@@ -61,10 +63,10 @@ export class PaymentsService {
     });
   }
 
-  async findAll(method?: payment_method_type) {
-    const where: Prisma.paymentWhereInput = {};
-    if (method) where.payment_method = method;
-    return this.prisma.payment.findMany({
+  async findAll(medioPago?: pago_medio_pago) {
+    const where: Prisma.Pago_ClienteWhereInput = {};
+    if (medioPago) where.medio_pago = medioPago;
+    return this.prisma.pago_Cliente.findMany({
       where,
       include,
       orderBy: { created_at: 'desc' },
@@ -72,37 +74,34 @@ export class PaymentsService {
   }
 
   async findOne(id: number) {
-    const payment = await this.prisma.payment.findUnique({
-      where: { payment_id: id },
+    const payment = await this.prisma.pago_Cliente.findUnique({
+      where: { id },
       include,
     });
-    if (!payment) throw new NotFoundException(`Pago #${id} no encontrado`);
+    if (!payment) {
+      throw new NotFoundException(`Pago #${id} no encontrado`);
+    }
     return payment;
   }
 
-  async findByOrder(customerOrderId: number) {
-    return this.prisma.payment.findMany({
-      where: { customer_order_id: customerOrderId },
+  async findByPedido(pedidoId: number) {
+    return this.prisma.pago_Cliente.findMany({
+      where: { id_pedido: pedidoId },
       include,
       orderBy: { created_at: 'desc' },
     });
   }
 
-  async update(
-    id: number,
-    dto: {
-      paymentMethod?: payment_method_type;
-      amount?: number;
-      receiptUrl?: string;
-    },
-  ) {
+  async update(id: number, dto: UpdatePaymentDto) {
     await this.findOne(id);
-    return this.prisma.payment.update({
-      where: { payment_id: id },
+    return this.prisma.pago_Cliente.update({
+      where: { id },
       data: {
-        payment_method: dto.paymentMethod,
-        amount: dto.amount,
-        receipt_url: dto.receiptUrl,
+        ...(dto.medioPago !== undefined ? { medio_pago: dto.medioPago } : {}),
+        ...(dto.monto !== undefined ? { monto: dto.monto } : {}),
+        ...(dto.urlComprobante !== undefined
+          ? { url_comprobante: dto.urlComprobante }
+          : {}),
       },
       include,
     });
@@ -110,50 +109,61 @@ export class PaymentsService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.payment.delete({
-      where: { payment_id: id },
+    return this.prisma.$transaction(async (tx) => {
+      await tx.detalles_Pago_Cliente.deleteMany({
+        where: { id_pago: id },
+      });
+      return tx.pago_Cliente.delete({ where: { id } });
     });
   }
 
   async addDetail(paymentId: number, dto: CreatePaymentDetailOnlyDto) {
     await this.findOne(paymentId);
-    return this.prisma.payment_details.create({
+    const plato = await this.prisma.platos_Menu.findFirst({
+      where: { id: dto.menuItemId, deleted_at: null },
+    });
+    if (!plato) {
+      throw new NotFoundException(`Plato #${dto.menuItemId} no encontrado`);
+    }
+    return this.prisma.detalles_Pago_Cliente.create({
       data: {
-        payment_id: paymentId,
-        menu_item_id: dto.menuItemId,
-        quantity: dto.quantity,
+        id_pago: paymentId,
+        id_menu_item: dto.menuItemId,
+        cantidad: dto.quantity,
         subtotal: dto.subtotal,
-        tax: dto.tax,
+        IGV: dto.igv,
       },
-      include: { menu_items: true },
+      include: { plato: true },
     });
   }
 
   async updateDetail(detailId: number, dto: UpdatePaymentDetailDto) {
-    const detail = await this.prisma.payment_details.findUnique({
-      where: { payment_detail_id: detailId },
+    const detail = await this.prisma.detalles_Pago_Cliente.findUnique({
+      where: { id: detailId },
     });
-    if (!detail)
+    if (!detail) {
       throw new NotFoundException(`Detalle de pago #${detailId} no encontrado`);
-    return this.prisma.payment_details.update({
-      where: { payment_detail_id: detailId },
+    }
+    return this.prisma.detalles_Pago_Cliente.update({
+      where: { id: detailId },
       data: {
-        quantity: dto.quantity,
-        subtotal: dto.subtotal,
-        tax: dto.tax,
+        ...(dto.quantity !== undefined ? { cantidad: dto.quantity } : {}),
+        ...(dto.subtotal !== undefined ? { subtotal: dto.subtotal } : {}),
+        ...(dto.igv !== undefined ? { IGV: dto.igv } : {}),
       },
+      include: { plato: true },
     });
   }
 
   async removeDetail(detailId: number) {
-    const detail = await this.prisma.payment_details.findUnique({
-      where: { payment_detail_id: detailId },
+    const detail = await this.prisma.detalles_Pago_Cliente.findUnique({
+      where: { id: detailId },
     });
-    if (!detail)
+    if (!detail) {
       throw new NotFoundException(`Detalle de pago #${detailId} no encontrado`);
-    return this.prisma.payment_details.delete({
-      where: { payment_detail_id: detailId },
+    }
+    return this.prisma.detalles_Pago_Cliente.delete({
+      where: { id: detailId },
     });
   }
-  */
 }

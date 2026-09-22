@@ -1,51 +1,41 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { platos_categoria } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
 
-const itemInclude = {
-  menu_item_tagging: {
-    include: { menu_item_tags: true },
-  },
-  combo_description_combo_description_menu_item_idTomenu_items: {
+const detailInclude = {
+  ingredientes: {
     include: {
-      menu_items_combo_description_combo_item_idTomenu_items: true,
+      insumo: true,
+      medida: true,
+      almacen: true,
     },
   },
-};
+} as const;
 
 @Injectable()
 export class MenuItemsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
-  /*
-  async findAll(tag?: string) {
-    const where: any = { status: 'available' };
-    if (tag) {
-      where.menu_item_tagging = {
-        some: { menu_item_tags: { name: tag } },
-      };
-    }
-    return this.prisma.menu_items.findMany({
-      where,
-      include: itemInclude,
-      orderBy: { menu_item_id: 'asc' },
+  async findAll(categoria?: platos_categoria) {
+    return this.prisma.platos_Menu.findMany({
+      where: {
+        deleted_at: null,
+        ...(categoria ? { categoria } : {}),
+      },
+      orderBy: { id: 'asc' },
     });
   }
 
   async findOne(id: number) {
-    const item = await this.prisma.menu_items.findUnique({
-      where: { menu_item_id: id },
-      include: {
-        ...itemInclude,
-        menu_item_ingredients: {
-          include: {
-            internal_supplies: true,
-            storage_rooms: true,
-          },
-        },
-      },
+    const item = await this.prisma.platos_Menu.findFirst({
+      where: { id, deleted_at: null },
+      include: detailInclude,
     });
-    if (!item) throw new NotFoundException(`Menu item #${id} no encontrado`);
+    if (!item) {
+      throw new NotFoundException(`Plato #${id} no encontrado`);
+    }
     return item;
   }
-  */
 }
