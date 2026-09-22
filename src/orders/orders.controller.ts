@@ -1,61 +1,72 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Patch,
+  Inject,
   Param,
   ParseIntPipe,
-  Body,
+  Post,
   Query,
 } from '@nestjs/common';
-import { OrdersService } from './orders.service';
-// import { customer_order_status_type } from '@src/generated/prisma/client';
-import { CreateOrderDto } from './dto/create-order.dto';
 import {
-  UpdateOrderStatusDto,
-  UpdateOrderItemStatusDto,
-} from './dto/update-order-status.dto';
+  ApiBearerAuth,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiQuery,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
+import { pedido_tipo } from '@prisma/client';
+import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+import { OrdersService } from './orders.service';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('api/orders')
+@ApiTags('orders')
+@ApiBearerAuth()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    @Inject(OrdersService) private readonly ordersService: OrdersService,
+  ) {}
 
-  /*
   @Post()
-  create(@Body() dto: CreateOrderDto) {
-    return this.ordersService.create(dto);
+  @ApiOperation({ summary: 'Crea un pedido con sus detalles.' })
+  @ApiCreatedResponse({ description: 'Pedido creado.' })
+  @ApiNotFoundResponse({ description: 'Mesa, plato o cliente no encontrado.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  create(
+    @Body() dto: CreateOrderDto,
+    @CurrentUserId() createdBy: number,
+  ) {
+    return this.ordersService.create(dto, createdBy);
   }
 
   @Get()
-  findAll(@Query('status') status?: customer_order_status_type) {
-    return this.ordersService.findAll(status);
+  @ApiOperation({ summary: 'Lista pedidos activos; filtra por tipo.' })
+  @ApiQuery({ name: 'tipo', required: false, enum: pedido_tipo })
+  @ApiOkResponse({ description: 'Listado de pedidos.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  findAll(@Query('tipo') tipo?: pedido_tipo) {
+    return this.ordersService.findAll(tipo);
   }
 
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.ordersService.findOne(id);
-  }
-
-  @Get('table/:tableNumber')
+  @Get('mesa/:tableNumber')
+  @ApiOperation({ summary: 'Lista pedidos de una mesa.' })
+  @ApiOkResponse({ description: 'Pedidos de la mesa.' })
+  @ApiNotFoundResponse({ description: 'Mesa no encontrada.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   findByTable(@Param('tableNumber', ParseIntPipe) tableNumber: number) {
     return this.ordersService.findByTable(tableNumber);
   }
 
-  @Patch(':id/status')
-  updateStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() dto: UpdateOrderStatusDto,
-  ) {
-    return this.ordersService.updateStatus(id, dto.status);
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtiene un pedido por id.' })
+  @ApiOkResponse({ description: 'Pedido encontrado.' })
+  @ApiNotFoundResponse({ description: 'Pedido no encontrado.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.ordersService.findOne(id);
   }
-
-  @Patch(':id/items/:itemId/status')
-  updateItemStatus(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('itemId', ParseIntPipe) itemId: number,
-    @Body() dto: UpdateOrderItemStatusDto,
-  ) {
-    return this.ordersService.updateItemStatus(id, itemId, dto.status);
-  }
-  */
 }
