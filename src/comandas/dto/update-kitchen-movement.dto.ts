@@ -1,7 +1,13 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { movimiento_estado } from '@prisma/client';
 import { IsEnum } from 'class-validator';
-// import { kitchen_movement_status } from '@src/generated/prisma/client';
 
 export class UpdateKitchenMovementDto {
-  // @IsEnum(kitchen_movement_status)
-  // status!: kitchen_movement_status;
+  @ApiProperty({
+    description: 'Nuevo estado del platillo en cocina',
+    enum: movimiento_estado,
+    example: movimiento_estado.terminado,
+  })
+  @IsEnum(movimiento_estado)
+  estado!: movimiento_estado;
 }

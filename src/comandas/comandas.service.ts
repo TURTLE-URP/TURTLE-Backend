@@ -1,56 +1,64 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { CreateComandaDto } from './dto/create-comanda.dto';
 import { CreateComandaItemOnlyDto } from './dto/create-comanda-item.dto';
 import { CreateKitchenMovementDto } from './dto/create-kitchen-movement.dto';
+import { UpdateComandaDto } from './dto/update-comanda.dto';
+import { UpdateComandaItemDto } from './dto/update-comanda-item.dto';
 
 const include = {
-  customer_order: {
+  pedido: {
     include: {
-      restaurant_table: true,
-      customer_order_items: { include: { menu_items: true } },
+      mesa: true,
+      detalles: { include: { plato: true } },
     },
   },
-  comanda_items: {
+  detalles: {
     include: {
-      menu_items: true,
-      kitchen_movements: true,
+      plato: true,
+      movimientos: true,
     },
   },
 } as const;
 
+const itemInclude = {
+  plato: true,
+  movimientos: true,
+} as const;
+
 @Injectable()
 export class ComandasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
-  /*
   async create(dto: CreateComandaDto) {
-    const order = await this.prisma.customer_order.findUnique({
-      where: { customer_order_id: dto.customerOrderId },
+    const pedido = await this.prisma.pedido.findFirst({
+      where: { id: dto.pedidoId, deleted_at: null },
     });
-    if (!order)
-      throw new NotFoundException(
-        `Orden #${dto.customerOrderId} no encontrada`,
-      );
+    if (!pedido) {
+      throw new NotFoundException(`Pedido #${dto.pedidoId} no encontrado`);
+    }
 
-    const menuItemIds = dto.items.map((i) => i.menuItemId);
-    const menuItems = await this.prisma.menu_items.findMany({
-      where: { menu_item_id: { in: menuItemIds } },
+    const menuItemIds = [...new Set(dto.items.map((i) => i.menuItemId))];
+    const menuItems = await this.prisma.platos_Menu.findMany({
+      where: { id: { in: menuItemIds }, deleted_at: null },
     });
-    if (menuItems.length !== menuItemIds.length)
+    if (menuItems.length !== menuItemIds.length) {
       throw new NotFoundException(
         'Uno o más ítems de menú no fueron encontrados',
       );
+    }
 
     return this.prisma.comanda.create({
       data: {
-        code: `COM-${Date.now().toString(36).toUpperCase()}`,
-        customer_order_id: dto.customerOrderId,
-        comanda_items: {
+        codigo: `COM-${Date.now().toString(36).toUpperCase()}`,
+        id_pedido: dto.pedidoId,
+        detalles: {
           create: dto.items.map((item) => ({
-            menu_item_id: item.menuItemId,
-            quantity: item.quantity,
-            notes: item.notes,
+            id_menu_item: item.menuItemId,
+            cantidad: item.quantity,
+            notas: item.notes,
           })),
         },
       },
@@ -61,31 +69,41 @@ export class ComandasService {
   async findAll() {
     return this.prisma.comanda.findMany({
       include,
-      orderBy: { created_at: 'desc' },
+      orderBy: { fecha_hora_emision: 'desc' },
     });
   }
 
   async findOne(id: number) {
     const comanda = await this.prisma.comanda.findUnique({
-      where: { comanda_id: id },
+      where: { id },
       include,
     });
-    if (!comanda) throw new NotFoundException(`Comanda #${id} no encontrada`);
+    if (!comanda) {
+      throw new NotFoundException(`Comanda #${id} no encontrada`);
+    }
     return comanda;
   }
 
-  async findByOrder(customerOrderId: number) {
+  async findByPedido(pedidoId: number) {
     return this.prisma.comanda.findMany({
-      where: { customer_order_id: customerOrderId },
+      where: { id_pedido: pedidoId },
       include,
-      orderBy: { created_at: 'desc' },
+      orderBy: { fecha_hora_emision: 'desc' },
     });
   }
 
-  async update(id: number, data: { ready?: boolean }) {
+  async update(id: number, dto: UpdateComandaDto) {
     await this.findOne(id);
+    const data: {
+      listo?: boolean;
+      fecha_hora_listo?: Date | null;
+    } = {};
+    if (dto.listo !== undefined) {
+      data.listo = dto.listo;
+      data.fecha_hora_listo = dto.listo ? new Date() : null;
+    }
     return this.prisma.comanda.update({
-      where: { comanda_id: id },
+      where: { id },
       data,
       include,
     });
@@ -93,80 +111,107 @@ export class ComandasService {
 
   async remove(id: number) {
     await this.findOne(id);
-    return this.prisma.comanda.delete({
-      where: { comanda_id: id },
+    return this.prisma.$transaction(async (tx) => {
+      const detalles = await tx.detalles_Comanda.findMany({
+        where: { id_comanda: id },
+        select: { id: true },
+      });
+      const detalleIds = detalles.map((d) => d.id);
+      if (detalleIds.length > 0) {
+        await tx.movimientos_Cocina.deleteMany({
+          where: { id_detalle_comanda: { in: detalleIds } },
+        });
+        await tx.detalles_Comanda.deleteMany({
+          where: { id_comanda: id },
+        });
+      }
+      return tx.comanda.delete({ where: { id } });
     });
   }
 
   async addItem(comandaId: number, dto: CreateComandaItemOnlyDto) {
     await this.findOne(comandaId);
-    return this.prisma.comanda_items.create({
+    const plato = await this.prisma.platos_Menu.findFirst({
+      where: { id: dto.menuItemId, deleted_at: null },
+    });
+    if (!plato) {
+      throw new NotFoundException(`Plato #${dto.menuItemId} no encontrado`);
+    }
+    return this.prisma.detalles_Comanda.create({
       data: {
-        comanda_id: comandaId,
-        menu_item_id: dto.menuItemId,
-        quantity: dto.quantity,
-        notes: dto.notes,
+        id_comanda: comandaId,
+        id_menu_item: dto.menuItemId,
+        cantidad: dto.quantity,
+        notas: dto.notes,
       },
-      include: { menu_items: true, kitchen_movements: true },
+      include: itemInclude,
     });
   }
 
-  async updateItem(
-    itemId: number,
-    data: { quantity?: number; notes?: string },
-  ) {
-    const item = await this.prisma.comanda_items.findUnique({
-      where: { comanda_item_id: itemId },
+  async updateItem(itemId: number, dto: UpdateComandaItemDto) {
+    const item = await this.prisma.detalles_Comanda.findUnique({
+      where: { id: itemId },
     });
-    if (!item) throw new NotFoundException(`Item #${itemId} no encontrado`);
-    return this.prisma.comanda_items.update({
-      where: { comanda_item_id: itemId },
-      data,
-      include: { menu_items: true, kitchen_movements: true },
+    if (!item) {
+      throw new NotFoundException(`Item #${itemId} no encontrado`);
+    }
+    return this.prisma.detalles_Comanda.update({
+      where: { id: itemId },
+      data: {
+        ...(dto.quantity !== undefined ? { cantidad: dto.quantity } : {}),
+        ...(dto.notes !== undefined ? { notas: dto.notes } : {}),
+      },
+      include: itemInclude,
     });
   }
 
   async removeItem(itemId: number) {
-    const item = await this.prisma.comanda_items.findUnique({
-      where: { comanda_item_id: itemId },
+    const item = await this.prisma.detalles_Comanda.findUnique({
+      where: { id: itemId },
     });
-    if (!item) throw new NotFoundException(`Item #${itemId} no encontrado`);
-    return this.prisma.comanda_items.delete({
-      where: { comanda_item_id: itemId },
+    if (!item) {
+      throw new NotFoundException(`Item #${itemId} no encontrado`);
+    }
+    return this.prisma.$transaction(async (tx) => {
+      await tx.movimientos_Cocina.deleteMany({
+        where: { id_detalle_comanda: itemId },
+      });
+      return tx.detalles_Comanda.delete({ where: { id: itemId } });
     });
   }
 
-  async addMovement(comandaItemId: number, dto: CreateKitchenMovementDto) {
-    const item = await this.prisma.comanda_items.findUnique({
-      where: { comanda_item_id: comandaItemId },
+  async addMovement(detalleComandaId: number, dto: CreateKitchenMovementDto) {
+    const item = await this.prisma.detalles_Comanda.findUnique({
+      where: { id: detalleComandaId },
     });
-    if (!item)
+    if (!item) {
       throw new NotFoundException(
-        `Item de comanda #${comandaItemId} no encontrado`,
+        `Item de comanda #${detalleComandaId} no encontrado`,
       );
+    }
 
-    return this.prisma.kitchen_movements.create({
+    return this.prisma.movimientos_Cocina.create({
       data: {
-        comanda_item_id: comandaItemId,
-        status: dto.status,
-        quantity: dto.quantity,
+        id_detalle_comanda: detalleComandaId,
+        estado_platillo: dto.estado,
+        cantidad: dto.quantity,
       },
     });
   }
 
-  async getMovements(comandaItemId: number) {
-    const item = await this.prisma.comanda_items.findUnique({
-      where: { comanda_item_id: comandaItemId },
+  async getMovements(detalleComandaId: number) {
+    const item = await this.prisma.detalles_Comanda.findUnique({
+      where: { id: detalleComandaId },
     });
-    if (!item)
+    if (!item) {
       throw new NotFoundException(
-        `Item de comanda #${comandaItemId} no encontrado`,
+        `Item de comanda #${detalleComandaId} no encontrado`,
       );
+    }
 
-    return this.prisma.kitchen_movements.findMany({
-      where: { comanda_item_id: comandaItemId },
-      orderBy: { timestamp: 'desc' },
+    return this.prisma.movimientos_Cocina.findMany({
+      where: { id_detalle_comanda: detalleComandaId },
+      orderBy: { fecha_hora: 'desc' },
     });
   }
-  */
 }
