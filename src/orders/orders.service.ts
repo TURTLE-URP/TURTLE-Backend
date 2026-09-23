@@ -1,145 +1,136 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { pedido_tipo } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
-// import {
-//   customer_order_status_type,
-//   customer_order_item_status_type,
-// } from '@src/generated/prisma/client';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const TAX_RATE = 0.18;
 
+const include = {
+  mesa: true,
+  cliente: true,
+  detalles: {
+    include: { plato: true },
+  },
+} as const;
+
 @Injectable()
 export class OrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
-  /*
-  async create(dto: CreateOrderDto) {
-    const table = await this.prisma.restaurant_table.findUnique({
-      where: { table_number: dto.tableNumber },
-    });
-    if (!table)
-      throw new NotFoundException(`Mesa #${dto.tableNumber} no encontrada`);
+  async create(dto: CreateOrderDto, createdBy: number) {
+    if (dto.tipo === pedido_tipo.local && dto.tableNumber == null) {
+      throw new BadRequestException(
+        'tableNumber es requerido cuando tipo es local',
+      );
+    }
 
-    const menuItemIds = dto.items.map((i) => i.menuItemId);
-    const menuItems = await this.prisma.menu_items.findMany({
-      where: { menu_item_id: { in: menuItemIds } },
+    let idMesa: number | undefined;
+    if (dto.tableNumber != null) {
+      const mesa = await this.prisma.mesa.findFirst({
+        where: { numero_mesa: dto.tableNumber, deleted_at: null },
+      });
+      if (!mesa) {
+        throw new NotFoundException(`Mesa #${dto.tableNumber} no encontrada`);
+      }
+      idMesa = mesa.id;
+    }
+
+    if (dto.idClienteDigital != null) {
+      const cliente = await this.prisma.cliente_Digital.findUnique({
+        where: { id: dto.idClienteDigital },
+      });
+      if (!cliente) {
+        throw new NotFoundException(
+          `Cliente digital #${dto.idClienteDigital} no encontrado`,
+        );
+      }
+    }
+
+    const menuItemIds = [...new Set(dto.items.map((i) => i.menuItemId))];
+    const menuItems = await this.prisma.platos_Menu.findMany({
+      where: { id: { in: menuItemIds }, deleted_at: null },
     });
-    const priceMap = Object.fromEntries(
-      menuItems.map((m) => [m.menu_item_id, Number(m.unit_price)]),
+    if (menuItems.length !== menuItemIds.length) {
+      throw new NotFoundException(
+        'Uno o más ítems de menú no fueron encontrados',
+      );
+    }
+
+    const priceMap = new Map(
+      menuItems.map((m) => [m.id, Number(m.precio)] as const),
     );
 
     let subtotal = 0;
-    const orderItemsData = dto.items.map((item) => {
-      const price = priceMap[item.menuItemId] ?? 0;
-      const lineTotal = price * item.quantity;
-      subtotal += lineTotal;
+    const detallesData = dto.items.map((item) => {
+      const price = priceMap.get(item.menuItemId) ?? 0;
+      const lineSubtotal = price * item.quantity;
+      subtotal += lineSubtotal;
       return {
-        menu_item_id: item.menuItemId,
-        quantity: item.quantity,
-        customer_comments: item.comments,
-        status: 'pending' as const,
+        id_menu_item: item.menuItemId,
+        cantidad: item.quantity,
+        subtotal: lineSubtotal,
       };
     });
 
-    const tax = subtotal * TAX_RATE;
+    const igv = subtotal * TAX_RATE;
 
-    return this.prisma.customer_order.create({
+    return this.prisma.pedido.create({
       data: {
-        restaurant_table_id: table.restaurant_table_id,
-        customer_name: dto.customerName,
-        customer_id: dto.customerId,
-        order_type: dto.orderType,
+        codigo: `PED-${Date.now().toString(36).toUpperCase()}`,
+        tipo: dto.tipo,
+        IGV: igv,
         subtotal,
-        tax,
-        status: 'pending',
-        payment_status: 'pending',
-        customer_order_items: {
-          create: orderItemsData,
-        },
+        id_mesa: idMesa,
+        nombre_cliente_local: dto.nombreClienteLocal,
+        documento_cliente_local: dto.documentoClienteLocal,
+        id_cliente_digital: dto.idClienteDigital,
+        created_by: createdBy,
+        detalles: { create: detallesData },
       },
-      include: {
-        restaurant_table: true,
-        customer_order_items: {
-          include: { menu_items: true },
-        },
+      include,
+    });
+  }
+
+  async findAll(tipo?: pedido_tipo) {
+    return this.prisma.pedido.findMany({
+      where: {
+        deleted_at: null,
+        ...(tipo ? { tipo } : {}),
       },
+      include,
+      orderBy: { created_at: 'desc' },
     });
   }
 
   async findOne(id: number) {
-    const order = await this.prisma.customer_order.findUnique({
-      where: { customer_order_id: id },
-      include: {
-        restaurant_table: true,
-        customer_order_items: {
-          include: { menu_items: true },
-        },
-      },
+    const order = await this.prisma.pedido.findFirst({
+      where: { id, deleted_at: null },
+      include,
     });
-    if (!order) throw new NotFoundException(`Orden #${id} no encontrada`);
+    if (!order) {
+      throw new NotFoundException(`Pedido #${id} no encontrado`);
+    }
     return order;
   }
 
   async findByTable(tableNumber: number) {
-    const table = await this.prisma.restaurant_table.findUnique({
-      where: { table_number: tableNumber },
+    const mesa = await this.prisma.mesa.findFirst({
+      where: { numero_mesa: tableNumber, deleted_at: null },
     });
-    if (!table)
+    if (!mesa) {
       throw new NotFoundException(`Mesa #${tableNumber} no encontrada`);
-    return this.prisma.customer_order.findMany({
-      where: { restaurant_table_id: table.restaurant_table_id },
-      include: {
-        customer_order_items: {
-          include: { menu_items: true },
-        },
-      },
+    }
+    return this.prisma.pedido.findMany({
+      where: { id_mesa: mesa.id, deleted_at: null },
+      include,
       orderBy: { created_at: 'desc' },
     });
   }
-
-  async updateStatus(id: number, status: customer_order_status_type) {
-    const order = await this.findOne(id);
-    return this.prisma.customer_order.update({
-      where: { customer_order_id: id },
-      data: { status },
-      include: {
-        restaurant_table: true,
-        customer_order_items: {
-          include: { menu_items: true },
-        },
-      },
-    });
-  }
-
-  async updateItemStatus(
-    orderId: number,
-    itemId: number,
-    status: customer_order_item_status_type,
-  ) {
-    const item = await this.prisma.customer_order_items.findFirst({
-      where: { customer_order_item_id: itemId, customer_order_id: orderId },
-    });
-    if (!item)
-      throw new NotFoundException(`Item #${itemId} no encontrado en la orden`);
-    return this.prisma.customer_order_items.update({
-      where: { customer_order_item_id: itemId },
-      data: { status },
-    });
-  }
-
-  async findAll(status?: customer_order_status_type) {
-    const where: any = {};
-    if (status) where.status = status;
-    return this.prisma.customer_order.findMany({
-      where,
-      include: {
-        restaurant_table: true,
-        customer_order_items: {
-          include: { menu_items: true },
-        },
-      },
-      orderBy: { created_at: 'desc' },
-    });
-  }
-  */
 }

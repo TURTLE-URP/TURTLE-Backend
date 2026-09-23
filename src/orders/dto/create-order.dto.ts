@@ -1,42 +1,66 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { pedido_tipo } from '@prisma/client';
+import { Type } from 'class-transformer';
 import {
-  IsInt,
-  IsString,
-  IsArray,
   ArrayMinSize,
+  IsArray,
+  IsEnum,
+  IsInt,
   IsOptional,
+  IsString,
   Min,
   ValidateNested,
-  IsEnum,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-// import { customer_order_type } from '@src/generated/prisma/client';
 
 export class CreateOrderItemDto {
+  @ApiProperty({ description: 'ID del plato', example: 1 })
   @IsInt()
   menuItemId!: number;
 
+  @ApiProperty({ example: 2, minimum: 1 })
   @IsInt()
   @Min(1)
   quantity!: number;
-
-  @IsOptional()
-  @IsString()
-  comments?: string;
 }
 
 export class CreateOrderDto {
+  @ApiProperty({ enum: pedido_tipo, example: pedido_tipo.local })
+  @IsEnum(pedido_tipo)
+  tipo!: pedido_tipo;
+
+  @ApiPropertyOptional({
+    description: 'Número de mesa (requerido si tipo = local)',
+    example: 1,
+  })
+  @IsOptional()
   @IsInt()
-  tableNumber!: number;
+  tableNumber?: number;
 
+  @ApiPropertyOptional({
+    description: 'Nombre del cliente local',
+    example: 'Juan Pérez',
+  })
+  @IsOptional()
   @IsString()
-  customerName!: string;
+  nombreClienteLocal?: string;
 
+  @ApiPropertyOptional({
+    description: 'Documento del cliente local (DNI/RUC)',
+    example: '12345678',
+  })
+  @IsOptional()
   @IsString()
-  customerId!: string;
+  documentoClienteLocal?: string;
 
-  // @IsEnum(customer_order_type)
-  // orderType!: customer_order_type;
+  @ApiPropertyOptional({
+    description: 'ID de cliente digital autenticado',
+    example: 1,
+  })
+  @IsOptional()
+  @IsInt()
+  idClienteDigital?: number;
 
+  @ApiProperty({ type: [CreateOrderItemDto] })
   @ValidateNested({ each: true })
   @Type(() => CreateOrderItemDto)
   @IsArray()

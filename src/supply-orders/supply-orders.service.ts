@@ -1,123 +1,203 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
+import { orden_estado, Prisma } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { CreateSupplyOrderDto } from './dto/create-supply-order.dto';
 
-const supplierOptionsInclude = {
-  supplier_catalog_items: {
-    include: { suppliers: true },
-  },
-} as const;
+type SupplierOption = {
+  productoProveedorId: number;
+  supplierId: number;
+  supplierName: string;
+  productName: string;
+  unitPrice: number | null;
+  conversionFactor: number;
+};
 
 @Injectable()
 export class SupplyOrdersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    @Inject(PrismaService) private readonly prisma: PrismaService,
+  ) {}
 
-  /*
+  private mapSupplierOptions(
+    productos: {
+      id: number;
+      nombre: string;
+      precio_referencial: Prisma.Decimal | null;
+      factor_conversion: Prisma.Decimal;
+      id_proveedor: number;
+      proveedor: { razon_social: string; deleted_at: Date | null };
+    }[],
+  ): SupplierOption[] {
+    return productos
+      .filter((p) => p.proveedor.deleted_at == null)
+      .map((p) => ({
+        productoProveedorId: p.id,
+        supplierId: p.id_proveedor,
+        supplierName: p.proveedor.razon_social,
+        productName: p.nombre,
+        unitPrice:
+          p.precio_referencial != null ? Number(p.precio_referencial) : null,
+        conversionFactor: Number(p.factor_conversion),
+      }));
+  }
+
   async getMetrics() {
     const now = new Date();
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const [ordersThisMonth, pendingOrders, totalSpentResult, supplies] =
+    const [ordersThisMonth, openOrders, ordersWithDetails, stocks] =
       await Promise.all([
-        this.prisma.supply_orders.count({
-          where: { emission_date: { gte: firstDayOfMonth } },
+        this.prisma.orden_Abasto.count({
+          where: { fecha_hora_emision: { gte: firstDayOfMonth } },
         }),
-        this.prisma.supply_orders.count({ where: { status: 'pendiente' } }),
-        this.prisma.supply_orders.aggregate({
-          _sum: { total_amount: true },
-          where: { emission_date: { gte: firstDayOfMonth } },
+        this.prisma.orden_Abasto.count({
+          where: { estado: orden_estado.emitida },
         }),
-        this.prisma.internal_supplies.findMany({
-          select: { current_stock: true, min_stock: true },
+        this.prisma.orden_Abasto.findMany({
+          where: { fecha_hora_emision: { gte: firstDayOfMonth } },
+          include: {
+            detalles: {
+              include: { producto: true },
+            },
+          },
+        }),
+        this.prisma.stock_Almacen.findMany({
+          select: {
+            id_insumo: true,
+            stock_actual: true,
+            stock_min: true,
+          },
         }),
       ]);
 
-    const shortageCount = supplies.filter(
-      (s) => Number(s.current_stock) <= Number(s.min_stock),
+    const totalSpentThisMonth = ordersWithDetails.reduce((sum, order) => {
+      const orderTotal = order.detalles.reduce((lineSum, d) => {
+        const price = Number(d.producto.precio_referencial ?? 0);
+        return lineSum + d.cantidad * price;
+      }, 0);
+      return sum + orderTotal;
+    }, 0);
+
+    const byInsumo = new Map<
+      number,
+      { actual: number; min: number }
+    >();
+    for (const s of stocks) {
+      const prev = byInsumo.get(s.id_insumo) ?? { actual: 0, min: 0 };
+      prev.actual += Number(s.stock_actual);
+      prev.min += Number(s.stock_min);
+      byInsumo.set(s.id_insumo, prev);
+    }
+    const shortageCount = [...byInsumo.values()].filter(
+      (v) => v.actual <= v.min,
     ).length;
 
     return {
       ordersThisMonth,
-      pendingOrders,
-      totalSpentThisMonth: Number(totalSpentResult._sum.total_amount ?? 0),
+      openOrders,
+      totalSpentThisMonth,
       shortageCount,
     };
   }
 
-  async findAll(status?: string, search?: string) {
-    const where: any = {};
-    if (status) where.status = status.toLowerCase();
+  async findAll(estado?: orden_estado, search?: string) {
+    const where: Prisma.Orden_AbastoWhereInput = {};
+    if (estado) where.estado = estado;
     if (search) {
       where.OR = [
-        { order_code: { contains: search, mode: 'insensitive' } },
-        { group_code: { contains: search, mode: 'insensitive' } },
+        { codigo: { contains: search, mode: 'insensitive' } },
         {
-          suppliers: {
-            company_name: { contains: search, mode: 'insensitive' },
+          proveedor: {
+            razon_social: { contains: search, mode: 'insensitive' },
           },
         },
       ];
     }
 
-    const orders = await this.prisma.supply_orders.findMany({
+    const orders = await this.prisma.orden_Abasto.findMany({
       where,
-      include: { suppliers: true },
-      orderBy: { emission_date: 'desc' },
+      include: {
+        proveedor: true,
+        detalles: { include: { producto: true } },
+      },
+      orderBy: { fecha_hora_emision: 'desc' },
     });
 
-    return orders.map((order) => ({
-      supplyOrderId: order.supply_order_id,
-      orderCode: order.order_code,
-      groupCode: order.group_code,
-      supplierName: order.suppliers.company_name,
-      emissionDate: order.emission_date,
-      modality: order.modality,
-      status: order.status,
-      totalAmount: Number(order.total_amount),
-    }));
+    return orders.map((order) => {
+      const totalAmount = order.detalles.reduce((sum, d) => {
+        const price = Number(d.producto.precio_referencial ?? 0);
+        return sum + d.cantidad * price;
+      }, 0);
+      return {
+        id: order.id,
+        codigo: order.codigo,
+        estado: order.estado,
+        supplierName: order.proveedor.razon_social,
+        fechaHoraEmision: order.fecha_hora_emision,
+        totalAmount,
+      };
+    });
   }
 
   async calculateByShortage() {
-    const supplies = await this.prisma.internal_supplies.findMany({
+    const insumos = await this.prisma.insumo.findMany({
+      where: { deleted_at: null },
       include: {
-        units_of_measurement: true,
-        ...supplierOptionsInclude,
+        unidad_base: true,
+        stocks: true,
+        productos: { include: { proveedor: true } },
       },
     });
 
-    return supplies
-      .filter((item) => Number(item.current_stock) <= Number(item.min_stock))
-      .map((item) => ({
-        internalSupplyId: item.internal_supply_id,
-        name: item.name,
-        code: item.code,
-        currentStock: Number(item.current_stock),
-        minStock: Number(item.min_stock),
-        maxStock: Number(item.max_stock),
-        unitSymbol: item.units_of_measurement?.symbol,
-        neededQuantity: Number(item.max_stock) - Number(item.current_stock),
-        supplierOptions: item.supplier_catalog_items.map((cat) => ({
-          supplierCatalogItemId: cat.supplier_catalog_item_id,
-          supplierId: cat.supplier_id,
-          supplierName: cat.suppliers.company_name,
-          productName: cat.name,
-          unitPrice: Number(cat.unit_price),
-          conversionFactor: Number(cat.conversion_factor),
-        })),
-      }));
+    return insumos
+      .map((item) => {
+        const stockActual = item.stocks.reduce(
+          (s, row) => s + Number(row.stock_actual),
+          0,
+        );
+        const stockMin = item.stocks.reduce(
+          (s, row) => s + Number(row.stock_min),
+          0,
+        );
+        const stockIdeal = item.stocks.reduce(
+          (s, row) => s + Number(row.stock_ideal),
+          0,
+        );
+        return {
+          insumoId: item.id,
+          name: item.nombre,
+          code: item.codigo,
+          currentStock: stockActual,
+          minStock: stockMin,
+          idealStock: stockIdeal,
+          unitSymbol: item.unidad_base.abreviatura,
+          neededQuantity: Math.max(stockIdeal - stockActual, 0),
+          supplierOptions: this.mapSupplierOptions(item.productos),
+          _short: stockActual <= stockMin,
+        };
+      })
+      .filter((item) => item._short)
+      .map(({ _short, ...rest }) => {
+        void _short;
+        return rest;
+      });
   }
 
   async getDishes() {
-    const dishes = await this.prisma.menu_items.findMany({
-      where: { status: 'available' },
-      include: { _count: { select: { menu_item_ingredients: true } } },
-      orderBy: { name: 'asc' },
+    const dishes = await this.prisma.platos_Menu.findMany({
+      where: { deleted_at: null },
+      include: { _count: { select: { ingredientes: true } } },
+      orderBy: { nombre: 'asc' },
     });
 
     return dishes.map((dish) => ({
-      dishId: dish.menu_item_id,
-      name: dish.name,
-      ingredientsCount: dish._count.menu_item_ingredients,
+      dishId: dish.id,
+      name: dish.nombre,
+      ingredientsCount: dish._count.ingredientes,
     }));
   }
 
@@ -130,15 +210,19 @@ export class SupplyOrdersService {
 
     const quantityMap = new Map(demands.map((d) => [d.dishId, d.quantity]));
 
-    const dishes = await this.prisma.menu_items.findMany({
-      where: { menu_item_id: { in: demands.map((d) => d.dishId) } },
+    const dishes = await this.prisma.platos_Menu.findMany({
+      where: {
+        id: { in: demands.map((d) => d.dishId) },
+        deleted_at: null,
+      },
       include: {
-        menu_item_ingredients: {
+        ingredientes: {
           include: {
-            internal_supplies: {
+            insumo: {
               include: {
-                units_of_measurement: true,
-                ...supplierOptionsInclude,
+                unidad_base: true,
+                stocks: true,
+                productos: { include: { proveedor: true } },
               },
             },
           },
@@ -146,35 +230,42 @@ export class SupplyOrdersService {
       },
     });
 
-    const insumos = new Map<number, any>();
+    const insumos = new Map<
+      number,
+      {
+        insumoId: number;
+        name: string;
+        code: string;
+        currentStock: number;
+        neededQuantity: number;
+        unitSymbol: string;
+        supplierOptions: SupplierOption[];
+      }
+    >();
+
     for (const dish of dishes) {
-      const orderQty = quantityMap.get(dish.menu_item_id) ?? 0;
+      const orderQty = quantityMap.get(dish.id) ?? 0;
       if (orderQty <= 0) continue;
 
-      for (const ing of dish.menu_item_ingredients) {
-        const totalNeeded = Number(ing.equivalence_factor) * orderQty;
-        const existing = insumos.get(ing.internal_supply_id);
+      for (const ing of dish.ingredientes) {
+        const totalNeeded = Number(ing.cantidad) * orderQty;
+        const existing = insumos.get(ing.id_insumo);
         if (existing) {
           existing.neededQuantity += totalNeeded;
           continue;
         }
-        insumos.set(ing.internal_supply_id, {
-          internalSupplyId: ing.internal_supply_id,
-          name: ing.internal_supplies.name,
-          code: ing.internal_supplies.code,
-          currentStock: Number(ing.internal_supplies.current_stock),
+        const stockActual = ing.insumo.stocks.reduce(
+          (s, row) => s + Number(row.stock_actual),
+          0,
+        );
+        insumos.set(ing.id_insumo, {
+          insumoId: ing.id_insumo,
+          name: ing.insumo.nombre,
+          code: ing.insumo.codigo,
+          currentStock: stockActual,
           neededQuantity: totalNeeded,
-          unitSymbol: ing.internal_supplies.units_of_measurement?.symbol,
-          supplierOptions: ing.internal_supplies.supplier_catalog_items.map(
-            (cat) => ({
-              supplierCatalogItemId: cat.supplier_catalog_item_id,
-              supplierId: cat.supplier_id,
-              supplierName: cat.suppliers.company_name,
-              productName: cat.name,
-              unitPrice: Number(cat.unit_price),
-              conversionFactor: Number(cat.conversion_factor),
-            }),
-          ),
+          unitSymbol: ing.insumo.unidad_base.abreviatura,
+          supplierOptions: this.mapSupplierOptions(ing.insumo.productos),
         });
       }
     }
@@ -183,99 +274,108 @@ export class SupplyOrdersService {
   }
 
   async getFreeSupplyItems() {
-    const supplies = await this.prisma.internal_supplies.findMany({
+    const supplies = await this.prisma.insumo.findMany({
+      where: { deleted_at: null },
       include: {
-        units_of_measurement: true,
-        ...supplierOptionsInclude,
+        unidad_base: true,
+        stocks: true,
+        productos: { include: { proveedor: true } },
       },
-      orderBy: { name: 'asc' },
+      orderBy: { nombre: 'asc' },
     });
 
-    return supplies.map((item) => ({
-      internalSupplyId: item.internal_supply_id,
-      name: item.name,
-      code: item.code,
-      currentStock: Number(item.current_stock),
-      unitSymbol: item.units_of_measurement?.symbol,
-      supplierOptions: item.supplier_catalog_items.map((cat) => ({
-        supplierCatalogItemId: cat.supplier_catalog_item_id,
-        supplierId: cat.supplier_id,
-        supplierName: cat.suppliers.company_name,
-        productName: cat.name,
-        unitPrice: Number(cat.unit_price),
-        conversionFactor: Number(cat.conversion_factor),
-      })),
-    }));
+    return supplies.map((item) => {
+      const stockActual = item.stocks.reduce(
+        (s, row) => s + Number(row.stock_actual),
+        0,
+      );
+      return {
+        insumoId: item.id,
+        name: item.nombre,
+        code: item.codigo,
+        currentStock: stockActual,
+        unitSymbol: item.unidad_base.abreviatura,
+        supplierOptions: this.mapSupplierOptions(item.productos),
+      };
+    });
   }
 
-  async createOrders(dto: CreateSupplyOrderDto) {
+  async createOrders(dto: CreateSupplyOrderDto, actorId: number) {
     if (!dto.items?.length) {
       throw new BadRequestException(
         'Debe incluir al menos un ítem para emitir la orden',
       );
     }
 
-    const catalogItemIds = dto.items.map((i) => i.supplierCatalogItemId);
-    const catalogItems = await this.prisma.supplier_catalog_items.findMany({
-      where: { supplier_catalog_item_id: { in: catalogItemIds } },
+    const productoIds = [
+      ...new Set(dto.items.map((i) => i.productoProveedorId)),
+    ];
+    const catalogItems = await this.prisma.productos_Proveedor.findMany({
+      where: { id: { in: productoIds } },
+      include: { proveedor: true },
     });
 
-    if (catalogItems.length !== catalogItemIds.length) {
+    if (catalogItems.length !== productoIds.length) {
       throw new BadRequestException(
-        'Uno o más ítems del catálogo comercial no existen',
+        'Uno o más productos de proveedor no existen',
       );
     }
 
     const qtyMap = new Map(
-      dto.items.map((i) => [i.supplierCatalogItemId, i.quantity]),
+      dto.items.map((i) => [i.productoProveedorId, i.quantity]),
     );
 
-    const groupedBySupplier = new Map<number, any[]>();
+    const groupedBySupplier = new Map<
+      number,
+      { productoProveedorId: number; quantity: number; unitPrice: number }[]
+    >();
+
     for (const cat of catalogItems) {
-      if (!groupedBySupplier.has(cat.supplier_id)) {
-        groupedBySupplier.set(cat.supplier_id, []);
+      if (cat.proveedor.deleted_at != null) {
+        throw new BadRequestException(
+          `Proveedor del producto #${cat.id} está dado de baja`,
+        );
       }
-      groupedBySupplier.get(cat.supplier_id)!.push({
-        supplierCatalogItemId: cat.supplier_catalog_item_id,
-        quantity: qtyMap.get(cat.supplier_catalog_item_id) ?? 0,
-        unitPrice: Number(cat.unit_price),
+      const list = groupedBySupplier.get(cat.id_proveedor) ?? [];
+      list.push({
+        productoProveedorId: cat.id,
+        quantity: qtyMap.get(cat.id) ?? 0,
+        unitPrice: Number(cat.precio_referencial ?? 0),
       });
+      groupedBySupplier.set(cat.id_proveedor, list);
     }
 
-    const groupCount = await this.prisma.supply_orders.count();
-    const groupCode = `G-${String(groupCount + 1).padStart(3, '0')}`;
+    const existingCount = await this.prisma.orden_Abasto.count();
 
     const orders = await this.prisma.$transaction(async (tx) => {
-      const created: any[] = [];
+      const created: Prisma.Orden_AbastoGetPayload<{
+        include: {
+          proveedor: true;
+          detalles: { include: { producto: true } };
+        };
+      }>[] = [];
       let orderIndex = 1;
       for (const [supplierId, items] of groupedBySupplier.entries()) {
-        const totalAmount = items.reduce(
-          (sum, i) => sum + i.quantity * i.unitPrice,
-          0,
-        );
-        const orderCode = `OA-${String(groupCount + orderIndex).padStart(4, '0')}`;
+        const codigo = `OA-${String(existingCount + orderIndex).padStart(4, '0')}`;
         orderIndex += 1;
 
-        const order = await tx.supply_orders.create({
+        const order = await tx.orden_Abasto.create({
           data: {
-            order_code: orderCode,
-            group_code: groupCode,
-            modality: dto.modality,
-            status: 'pendiente',
-            total_amount: totalAmount,
-            supplier_id: supplierId,
-            supply_order_contents: {
+            codigo,
+            estado: orden_estado.emitida,
+            emitida_a: supplierId,
+            emitida_por: actorId,
+            created_by: actorId,
+            detalles: {
               create: items.map((i) => ({
-                supplier_catalog_item_id: i.supplierCatalogItemId,
-                quantity: i.quantity,
+                id_producto_proveedor: i.productoProveedorId,
+                cantidad: i.quantity,
               })),
             },
           },
           include: {
-            suppliers: true,
-            supply_order_contents: {
-              include: { supplier_catalog_items: true },
-            },
+            proveedor: true,
+            detalles: { include: { producto: true } },
           },
         });
         created.push(order);
@@ -286,10 +386,8 @@ export class SupplyOrdersService {
     return {
       success: true,
       message: `${orders.length} orden(es) emitida(s) exitosamente`,
-      groupCode,
       ordersCreatedCount: orders.length,
       orders,
     };
   }
-  */
 }

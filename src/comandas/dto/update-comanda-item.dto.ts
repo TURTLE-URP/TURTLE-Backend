@@ -1,6 +1,18 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateComandaItemOnlyDto } from './create-comanda-item.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 
-export class UpdateComandaItemDto extends PartialType(
-  CreateComandaItemOnlyDto,
-) {}
+export class UpdateComandaItemDto {
+  @ApiPropertyOptional({ description: 'Nueva cantidad', example: 3, minimum: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  quantity?: number;
+
+  @ApiPropertyOptional({
+    description: 'Notas para cocina',
+    example: 'Extra salsa',
+  })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}

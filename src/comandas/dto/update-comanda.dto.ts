@@ -1,4 +1,12 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateComandaDto } from './create-comanda.dto';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsOptional } from 'class-validator';
 
-export class UpdateComandaDto extends PartialType(CreateComandaDto) {}
+export class UpdateComandaDto {
+  @ApiPropertyOptional({
+    description: 'Marca la comanda como lista (o vuelve a pendiente)',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  listo?: boolean;
+}

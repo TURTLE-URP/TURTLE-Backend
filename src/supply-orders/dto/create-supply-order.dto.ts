@@ -1,43 +1,55 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 import {
+  ArrayMinSize,
   IsArray,
-  IsEnum,
-  IsNumber,
+  IsInt,
   Min,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
-// import { supply_order_modality_type } from '@src/generated/prisma/client';
 
 export class SupplyOrderItemDto {
-  @IsNumber()
-  supplierCatalogItemId!: number;
+  @ApiProperty({
+    description: 'ID de Productos_Proveedor',
+    example: 1,
+  })
+  @IsInt()
+  productoProveedorId!: number;
 
-  @IsNumber()
-  @Min(0.001)
+  @ApiProperty({
+    description: 'Cantidad entera a pedir',
+    example: 10,
+    minimum: 1,
+  })
+  @IsInt()
+  @Min(1)
   quantity!: number;
 }
 
 export class CreateSupplyOrderDto {
-  // @IsEnum(supply_order_modality_type)
-  // modality!: supply_order_modality_type;
-
+  @ApiProperty({ type: [SupplyOrderItemDto] })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => SupplyOrderItemDto)
   items!: SupplyOrderItemDto[];
 }
 
 export class DishDemandDto {
-  @IsNumber()
+  @ApiProperty({ description: 'ID del plato', example: 1 })
+  @IsInt()
   dishId!: number;
 
-  @IsNumber()
+  @ApiProperty({ example: 20, minimum: 1 })
+  @IsInt()
   @Min(1)
   quantity!: number;
 }
 
 export class CalculateByDishesDto {
+  @ApiProperty({ type: [DishDemandDto] })
   @IsArray()
+  @ArrayMinSize(1)
   @ValidateNested({ each: true })
   @Type(() => DishDemandDto)
   items!: DishDemandDto[];
