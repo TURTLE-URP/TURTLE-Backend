@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
 import { UsersService } from './users.service';
 import { CreateWorkerDto } from '@src/workers/dto/create-worker.dto';
 import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
@@ -61,8 +62,10 @@ export class UsersController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  remove(@Param('id', ParseIntPipe) id: number) {
-    const currentUserId = 1; // ID temporal de auditoría
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() currentUserId: number,
+  ) {
     return this.usersService.remove(id, currentUserId);
   }
 }
