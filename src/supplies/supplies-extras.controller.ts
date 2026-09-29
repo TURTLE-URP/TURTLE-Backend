@@ -15,11 +15,12 @@ import {
   UpsertAlertaAlmacenDto,
   UpsertAlertaGlobalDto,
 } from './dto/supply-extras.dto';
+import { Public } from '@src/auth/decorators/public.decorator';
 
 // NOTA: requiere el schema de la propuesta ya aplicado (ver
 // propuesta-schema-alertas-stock.md). No registrar este controller en el
 // módulo hasta que la migración esté corrida.
-
+@Public()
 @ApiTags('Insumos - Detalle')
 @ApiBearerAuth('bearer')
 // TODO: agregar los mismos guards/roles que usa SuppliesController

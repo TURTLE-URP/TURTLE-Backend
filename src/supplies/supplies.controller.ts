@@ -18,11 +18,13 @@ import {
 import { SuppliesService } from './supplies.service';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
+import { Public } from '@src/auth/decorators/public.decorator';
 
 @ApiTags('Insumos')
 @ApiBearerAuth('bearer')
 // TODO: agregar los guards/roles del proyecto (ver src/auth y src/common), p. ej.:
 // @UseGuards(JwtAuthGuard, RolesGuard)
+@Public()
 @Controller('supplies')
 export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
