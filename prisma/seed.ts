@@ -194,13 +194,11 @@ async function main() {
     'Primer piso',
   );
 
-  // ---------- Stock por almacén (umbrales viven aquí, no en Insumo) ----------
-  async function stock(
-    almacenId: number,
-    insumoId: number,
-    min: string,
-    ideal: string,
-  ) {
+  // ---------- Stock por almacén (solo existencia física; sin umbrales) ----------
+  // CAMBIO: Stock_Almacen ya no tiene stock_min/stock_ideal (migración
+  // add_alertas_stock_y_uso_medidas). Esos umbrales ahora viven en
+  // Alerta_Global (a nivel insumo) y Alerta_Almacen (a nivel almacén).
+  async function stock(almacenId: number, insumoId: number) {
     const existing = await prisma.stock_Almacen.findFirst({
       where: { id_almacen: almacenId, id_insumo: insumoId },
     });
@@ -210,16 +208,62 @@ async function main() {
         id_almacen: almacenId,
         id_insumo: insumoId,
         stock_actual: '0',
-        stock_min: min,
-        stock_ideal: ideal,
         updated_at: now(),
       },
     });
   }
 
   for (const ins of [pollo, arroz, papa, aceite, sal, huevo]) {
-    await stock(almacenPrincipal.id, ins.id, '10', '100');
-    await stock(almacenCocina.id, ins.id, '5', '30');
+    await stock(almacenPrincipal.id, ins.id);
+    await stock(almacenCocina.id, ins.id);
+  }
+
+  // ---------- Alertas de stock (reemplazan los umbrales que salieron de Stock_Almacen) ----------
+  // Alerta_Global: umbral único por insumo, para reabastecimiento externo (compra).
+  async function alertaGlobal(
+    insumoId: number,
+    stockMin: string,
+    stockDeseado: string,
+  ) {
+    return prisma.alerta_Global.upsert({
+      where: { id_insumo: insumoId },
+      update: {},
+      create: {
+        id_insumo: insumoId,
+        stock_min: stockMin,
+        stock_deseado: stockDeseado,
+        created_at: now(),
+        created_by: ADMIN_ID,
+      },
+    });
+  }
+
+  // Alerta_Almacen: umbral por combinación insumo+almacén, para traslado interno.
+  async function alertaAlmacen(
+    insumoId: number,
+    almacenId: number,
+    minimoAlerta: string,
+    cantidadReponer: string,
+  ) {
+    return prisma.alerta_Almacen.upsert({
+      where: { id_insumo_id_almacen: { id_insumo: insumoId, id_almacen: almacenId } },
+      update: {},
+      create: {
+        id_insumo: insumoId,
+        id_almacen: almacenId,
+        minimo_alerta: minimoAlerta,
+        cantidad_reponer: cantidadReponer,
+        created_at: now(),
+        created_by: ADMIN_ID,
+      },
+    });
+  }
+
+  for (const ins of [pollo, arroz, papa, aceite, sal, huevo]) {
+    // valores demo: equivalentes a los min/ideal originales (10/100 principal, 5/30 cocina)
+    await alertaGlobal(ins.id, '15', '130');
+    await alertaAlmacen(ins.id, almacenPrincipal.id, '10', '90');
+    await alertaAlmacen(ins.id, almacenCocina.id, '5', '25');
   }
 
   // ---------- Proveedor + producto ----------

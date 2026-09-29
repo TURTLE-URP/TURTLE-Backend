@@ -11,7 +11,7 @@ import { RolesGuard } from './auth/guards/roles.guard';
 import { TablesModule } from './tables/tables.module';
 import { MenuItemsModule } from './menu-items/menu-items.module';
 import { OrdersModule } from './orders/orders.module';
-import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
+//import { SupplyOrdersModule } from './supply-orders/supply-orders.module';
 import { ComandasModule } from './comandas/comandas.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CustomersModule } from './customers/customers.module';
@@ -31,7 +31,7 @@ import { SuppliesModule } from './supplies/supplies.module';
     TablesModule,
     MenuItemsModule,
     OrdersModule,
-    SupplyOrdersModule,
+    //SupplyOrdersModule,
     ComandasModule,
     PaymentsModule,
     CustomersModule,

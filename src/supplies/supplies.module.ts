@@ -1,12 +1,11 @@
 import { Module } from '@nestjs/common';
 import { SuppliesController } from './supplies.controller';
 import { SuppliesService } from './supplies.service';
-// Si PrismaService no se inyecta, importar aquí el PrismaModule:
-// import { PrismaModule } from '../prisma/prisma.module';
+import { SuppliesExtrasController } from './supplies-extras.controller';
+import { SuppliesExtrasService } from './supplies-extras.service';
 
 @Module({
-  // imports: [PrismaModule],
-  controllers: [SuppliesController],
-  providers: [SuppliesService],
+  controllers: [SuppliesController, SuppliesExtrasController],
+  providers: [SuppliesService, SuppliesExtrasService],
 })
 export class SuppliesModule {}
