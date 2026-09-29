@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -17,6 +18,7 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
 import { TablesService } from './tables.service';
+import { UpdateTableDto } from './dto/update-table.dto';
 import { UpdateTableOcupadoDto } from './dto/update-table-ocupado.dto';
 
 @Controller('api/tables')
@@ -28,7 +30,10 @@ export class TablesController {
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Lista mesas activas ordenadas por número.' })
+  @ApiOperation({
+    summary:
+      'Lista mesas activas ordenadas por número, con el pedido local abierto más reciente.',
+  })
   @ApiOkResponse({ description: 'Listado de mesas.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   findAll() {
@@ -42,6 +47,22 @@ export class TablesController {
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   findByNumber(@Param('tableNumber', ParseIntPipe) tableNumber: number) {
     return this.tablesService.findByNumber(tableNumber);
+  }
+
+  @Patch(':tableNumber')
+  @ApiOperation({
+    summary: 'Actualiza número, capacidad, piso y ocupación de la mesa.',
+  })
+  @ApiOkResponse({ description: 'Mesa actualizada.' })
+  @ApiNotFoundResponse({ description: 'Mesa no encontrada.' })
+  @ApiConflictResponse({ description: 'El número de mesa ya existe.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  update(
+    @Param('tableNumber', ParseIntPipe) tableNumber: number,
+    @Body() dto: UpdateTableDto,
+    @CurrentUserId() updatedBy: number,
+  ) {
+    return this.tablesService.update(tableNumber, dto, updatedBy);
   }
 
   @Patch(':tableNumber/ocupado')
