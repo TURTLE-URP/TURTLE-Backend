@@ -7,26 +7,26 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
-
+ 
 const PAGE_SIZE = 10;
-
-// Datos que necesita la vista: unidad base y stock por almacén
+ 
+// Datos que necesita la vista: unidad base, stock por almacén y el umbral
+// global (ahora vive en Alerta_Global, ya no en Stock_Almacen)
 const include = {
   unidad_base: { select: { id: true, nombre: true, abreviatura: true } },
   stocks: {
     select: {
       id_almacen: true,
       stock_actual: true,
-      stock_min: true,
-      stock_ideal: true,
     },
   },
+  alerta_global: { select: { stock_min: true, stock_deseado: true } },
 };
-
+ 
 @Injectable()
 export class SuppliesService {
   constructor(private readonly prisma: PrismaService) {}
-
+ 
   async create(dto: CreateSupplyDto) {
     try {
       const insumo = await this.prisma.insumo.create({ data: dto, include });
@@ -35,7 +35,7 @@ export class SuppliesService {
       this.handleDbError(e);
     }
   }
-
+ 
   async findAll(nombre?: string, page = 1) {
     const where = {
       deleted_at: null,
@@ -43,7 +43,7 @@ export class SuppliesService {
         nombre: { contains: nombre, mode: 'insensitive' as const },
       }),
     };
-
+ 
     const [rows, total] = await Promise.all([
       this.prisma.insumo.findMany({
         where,
@@ -54,13 +54,13 @@ export class SuppliesService {
       }),
       this.prisma.insumo.count({ where }),
     ]);
-
+ 
     return {
       data: rows.map((r) => this.withTotals(r)),
       meta: { total, page, lastPage: Math.ceil(total / PAGE_SIZE) || 1 },
     };
   }
-
+ 
   async findOne(id: number) {
     const insumo = await this.prisma.insumo.findFirst({
       where: { id, deleted_at: null },
@@ -69,7 +69,7 @@ export class SuppliesService {
     if (!insumo) throw new NotFoundException(`Insumo ${id} no encontrado`);
     return this.withTotals(insumo);
   }
-
+ 
   async update(id: number, dto: UpdateSupplyDto) {
     await this.findOne(id);
     try {
@@ -83,7 +83,7 @@ export class SuppliesService {
       this.handleDbError(e);
     }
   }
-
+ 
   // Borrado lógico: el insumo puede estar referenciado por ingredientes, stock, etc.
   async remove(id: number) {
     await this.findOne(id);
@@ -93,26 +93,31 @@ export class SuppliesService {
     });
     return { id, deleted: true };
   }
-
-  // Suma el stock de todos los almacenes y marca si está bajo el mínimo
+ 
+  // Suma el stock de todos los almacenes y marca si está bajo el mínimo global
+  // (el mínimo ya no está por almacén: ahora es Alerta_Global.stock_min, y
+  // solo se puede evaluar si el insumo tiene esa alerta configurada)
   private withTotals<
-    T extends { stocks: { stock_actual: unknown; stock_min: unknown }[] },
+    T extends {
+      stocks: { stock_actual: unknown }[];
+      alerta_global: { stock_min: unknown; stock_deseado: unknown } | null;
+    },
   >(insumo: T) {
     const stock_total = insumo.stocks.reduce(
       (s, x) => s + Number(x.stock_actual),
       0,
     );
-    const stock_min_total = insumo.stocks.reduce(
-      (s, x) => s + Number(x.stock_min),
-      0,
-    );
+    const stock_min = insumo.alerta_global
+      ? Number(insumo.alerta_global.stock_min)
+      : null;
+ 
     return {
       ...insumo,
       stock_total,
-      bajo_minimo: insumo.stocks.length > 0 && stock_total < stock_min_total,
+      bajo_minimo: stock_min != null && stock_total < stock_min,
     };
   }
-
+ 
   private handleDbError(e: unknown): never {
     const code = (e as { code?: string })?.code;
     if (code === 'P2002')
@@ -122,3 +127,4 @@ export class SuppliesService {
     throw e;
   }
 }
+ 
