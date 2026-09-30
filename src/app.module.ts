@@ -20,6 +20,7 @@ import { AuditModule } from './audit/audit.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { WorkersModule } from './workers/workers.module';
 import { SuppliesModule } from './supplies/supplies.module';
+import { StoresModule } from './stores/stores.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -40,6 +41,7 @@ import { SuppliesModule } from './supplies/supplies.module';
     IntegrationsModule,
     WorkersModule,
     SuppliesModule,
+    StoresModule,
   ],
   controllers: [AppController],
   providers: [
