@@ -8,7 +8,7 @@ import {
   Patch,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  // ApiBearerAuth,
   ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
@@ -16,14 +16,18 @@ import {
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+// import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+import { Public } from '@src/auth/decorators/public.decorator';
 import { TablesService } from './tables.service';
 import { UpdateTableDto } from './dto/update-table.dto';
 import { UpdateTableOcupadoDto } from './dto/update-table-ocupado.dto';
 
 @Controller('api/tables')
 @ApiTags('tables')
-@ApiBearerAuth()
+// Anfitrión: estos endpoints no exigen token. La pantalla de estado
+// debe cargar aunque la sesión esté vencida.
+// @ApiBearerAuth()
+@Public()
 export class TablesController {
   constructor(
     @Inject(TablesService) private readonly tablesService: TablesService,
@@ -60,9 +64,9 @@ export class TablesController {
   update(
     @Param('tableNumber', ParseIntPipe) tableNumber: number,
     @Body() dto: UpdateTableDto,
-    @CurrentUserId() updatedBy: number,
+    // @CurrentUserId() updatedBy: number,
   ) {
-    return this.tablesService.update(tableNumber, dto, updatedBy);
+    return this.tablesService.update(tableNumber, dto);
   }
 
   @Patch(':tableNumber/ocupado')
@@ -73,8 +77,8 @@ export class TablesController {
   updateOcupado(
     @Param('tableNumber', ParseIntPipe) tableNumber: number,
     @Body() dto: UpdateTableOcupadoDto,
-    @CurrentUserId() updatedBy: number,
+    // @CurrentUserId() updatedBy: number,
   ) {
-    return this.tablesService.updateOcupado(tableNumber, dto, updatedBy);
+    return this.tablesService.updateOcupado(tableNumber, dto);
   }
 }

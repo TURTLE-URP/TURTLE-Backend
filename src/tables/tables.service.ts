@@ -49,7 +49,7 @@ export class TablesService {
     });
   }
 
-  async update(tableNumber: number, dto: UpdateTableDto, updatedBy: number) {
+  async update(tableNumber: number, dto: UpdateTableDto, updatedBy?: number) {
     const table = await this.findByNumber(tableNumber);
 
     if (dto.numero != null && dto.numero !== table.numero_mesa) {
@@ -75,7 +75,7 @@ export class TablesService {
         ...(dto.piso != null ? { piso: dto.piso } : {}),
         ...(dto.ocupado != null ? { ocupado: dto.ocupado } : {}),
         updated_at: new Date(),
-        updated_by: updatedBy,
+        ...(updatedBy != null ? { updated_by: updatedBy } : {}),
       },
       include: mesaWithPedido,
     });
@@ -84,7 +84,7 @@ export class TablesService {
   async updateOcupado(
     tableNumber: number,
     dto: UpdateTableOcupadoDto,
-    updatedBy: number,
+    updatedBy?: number,
   ) {
     const table = await this.findByNumber(tableNumber);
     return this.prisma.mesa.update({
@@ -92,7 +92,7 @@ export class TablesService {
       data: {
         ocupado: dto.ocupado,
         updated_at: new Date(),
-        updated_by: updatedBy,
+        ...(updatedBy != null ? { updated_by: updatedBy } : {}),
       },
       include: mesaWithPedido,
     });
