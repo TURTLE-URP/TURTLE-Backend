@@ -27,11 +27,57 @@ const include = {
 export class SuppliesService {
   constructor(private readonly prisma: PrismaService) {}
  
+  // Genera el siguiente código secuencial: INS-0001, INS-0002...
+  // Cuenta TODOS los insumos (incluidos los eliminados lógicamente) para
+  // no reutilizar un código que ya existió alguna vez.
+  private async generarCodigo(): Promise<string> {
+    const total = await this.prisma.insumo.count();
+    return `INS-${String(total + 1).padStart(4, '0')}`;
+  }
+ 
+  // Crea el insumo y, en la misma transacción, registra su unidad base
+  // también como medida alterna propia (factor_a_base = 1), para que
+  // aparezca desde el inicio en /supplies/:id/medidas.
+  private async crearInsumoConMedidaBase(dto: CreateSupplyDto, codigo: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const insumo = await tx.insumo.create({
+        data: { ...dto, codigo },
+        include,
+      });
+ 
+      await tx.insumo_Medidas.create({
+        data: {
+          id_insumo: insumo.id,
+          nombre: insumo.unidad_base.nombre,
+          abreviatura: insumo.unidad_base.abreviatura,
+          factor_a_base: '1',
+          uso: 'todo',
+        },
+      });
+ 
+      return insumo;
+    });
+  }
+ 
   async create(dto: CreateSupplyDto) {
+    const codigo = await this.generarCodigo();
     try {
-      const insumo = await this.prisma.insumo.create({ data: dto, include });
+      const insumo = await this.crearInsumoConMedidaBase(dto, codigo);
       return this.withTotals(insumo);
     } catch (e) {
+      // Carrera improbable: si dos creaciones concurrentes calculan el mismo
+      // código, P2002 avisa del choque y se reintenta una vez con el conteo
+      // actualizado.
+      const code = (e as { code?: string })?.code;
+      if (code === 'P2002') {
+        const codigoReintento = await this.generarCodigo();
+        try {
+          const insumo = await this.crearInsumoConMedidaBase(dto, codigoReintento);
+          return this.withTotals(insumo);
+        } catch (e2) {
+          this.handleDbError(e2);
+        }
+      }
       this.handleDbError(e);
     }
   }
@@ -127,4 +173,3 @@ export class SuppliesService {
     throw e;
   }
 }
- 
