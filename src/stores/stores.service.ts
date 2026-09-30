@@ -5,12 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { FindStoresQueryDto } from './dto/find-stores-query.dto';
+import { FindStoresOptionsQueryDto } from './dto/find-stores-options-query.dto';
 import { Prisma } from '@prisma/client';
 import {
   toPaginatedResponse,
   toResponse,
 } from '@src/common/utils/serializer.util';
 import { PaginatedStoresResponse } from './entities/paginated-stores-response.entity';
+import { PaginatedStoreOptionsResponse } from './entities/paginated-store-options-response.entity';
 import { CreateStoreDTO } from './dto/create-store.dto';
 import { StoreResponseEntity } from './entities/store-response.entity';
 import { UpdateStoreDTO } from './dto/update-store.dto';
@@ -61,6 +63,41 @@ export class StoresService {
       page,
       limit,
     );
+  }
+
+  async findForOptions(query: FindStoresOptionsQueryDto) {
+    const limit = query.limit ?? 5;
+    const search = query.search?.trim();
+
+    const whereANDInput: Prisma.AlmacenWhereInput[] = [{ deleted_at: null }];
+
+    if (search) {
+      whereANDInput.push({
+        OR: [
+          { nombre: { contains: search, mode: 'insensitive' } },
+          { codigo: { contains: search, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    const whereInput: Prisma.AlmacenWhereInput = { AND: whereANDInput };
+
+    const rows = await this.prisma.almacen.findMany({
+      where: whereInput,
+      select: { id: true, codigo: true, nombre: true },
+      orderBy: { id: 'asc' },
+      ...(query.cursor ? { skip: 1, cursor: { id: query.cursor } } : {}),
+      take: limit + 1,
+    });
+
+    const hasMore = rows.length > limit;
+    const data = hasMore ? rows.slice(0, limit) : rows;
+    const nextCursor = hasMore ? data[data.length - 1].id : null;
+
+    return toResponse(PaginatedStoreOptionsResponse, {
+      data,
+      meta: { limit, nextCursor, hasMore },
+    });
   }
 
   async create(dto: CreateStoreDTO) {

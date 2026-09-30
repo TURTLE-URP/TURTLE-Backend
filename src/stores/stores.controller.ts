@@ -24,8 +24,10 @@ import { StoresService } from './stores.service';
 import { CreateStoreDTO } from './dto/create-store.dto';
 import { UpdateStoreDTO } from './dto/update-store.dto';
 import { FindStoresQueryDto } from './dto/find-stores-query.dto';
+import { FindStoresOptionsQueryDto } from './dto/find-stores-options-query.dto';
 import { StoreResponseEntity } from './entities/store-response.entity';
 import { PaginatedStoresResponse } from './entities/paginated-stores-response.entity';
+import { PaginatedStoreOptionsResponse } from './entities/paginated-store-options-response.entity';
 import { StoreDeletedEntity } from './entities/store-deleted-response.entity';
 import { Public } from '@src/auth/decorators/public.decorator';
 @Controller('stores')
@@ -49,6 +51,20 @@ export class StoresController {
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   create(@Body() dto: CreateStoreDTO) {
     return this.storesService.create(dto);
+  }
+
+  @Get('options')
+  @ApiOperation({
+    summary:
+      'Lista ligera de almacenes para combobox con infinite scroll (cursor).',
+  })
+  @ApiOkResponse({
+    type: PaginatedStoreOptionsResponse,
+    description: 'Opciones de almacenes con nextCursor/hasMore.',
+  })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  findForOptions(@Query() query: FindStoresOptionsQueryDto) {
+    return this.storesService.findForOptions(query);
   }
 
   @Get()
