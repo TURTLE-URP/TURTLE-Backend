@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   CreateMedidaDto,
+  UpdateMedidaDto,
   UpsertAlertaAlmacenDto,
   UpsertAlertaGlobalDto,
 } from './dto/supply-extras.dto';
@@ -37,6 +42,43 @@ export class SuppliesExtrasService {
     return this.prisma.insumo_Medidas.create({
       data: { ...dto, id_insumo },
     });
+  }
+
+  async updateMedida(id_insumo: number, id_medida: number, dto: UpdateMedidaDto) {
+    const medida = await this.assertMedidaExiste(id_insumo, id_medida);
+    this.assertNoEsMedidaBase(medida, 'editar');
+
+    return this.prisma.insumo_Medidas.update({
+      where: { id: id_medida },
+      data: dto,
+    });
+  }
+
+  async removeMedida(id_insumo: number, id_medida: number) {
+    const medida = await this.assertMedidaExiste(id_insumo, id_medida);
+    this.assertNoEsMedidaBase(medida, 'eliminar');
+
+    const [enRecetas, enCatalogoProveedor, enDistribucion, enMovimientos, enMermas] =
+      await Promise.all([
+        this.prisma.ingredientes_Plato.count({ where: { id_medida_insumo: id_medida } }),
+        this.prisma.productos_Proveedor.count({ where: { id_insumo_medida: id_medida } }),
+        this.prisma.detalles_Distribucion_Abasto.count({
+          where: { id_insumo_medida: id_medida },
+        }),
+        this.prisma.movimiento_Almacen.count({ where: { id_insumo_medida: id_medida } }),
+        this.prisma.merma_Insumo.count({ where: { id_insumo_medida: id_medida } }),
+      ]);
+
+    const enUso =
+      enRecetas + enCatalogoProveedor + enDistribucion + enMovimientos + enMermas;
+    if (enUso > 0) {
+      throw new ConflictException(
+        'No se puede eliminar: la medida está en uso (recetas, catálogo de proveedor, distribuciones o movimientos de almacén).',
+      );
+    }
+
+    await this.prisma.insumo_Medidas.delete({ where: { id: id_medida } });
+    return { id: id_medida, deleted: true };
   }
 
   // ---------- 2. Validación de eliminación (3 criterios) ----------
@@ -202,5 +244,32 @@ export class SuppliesExtrasService {
     });
     if (!insumo) throw new NotFoundException(`Insumo ${id} no encontrado`);
     return insumo;
+  }
+
+  private async assertMedidaExiste(id_insumo: number, id_medida: number) {
+    await this.assertInsumoExiste(id_insumo);
+    const medida = await this.prisma.insumo_Medidas.findFirst({
+      where: { id: id_medida, id_insumo },
+    });
+    if (!medida) {
+      throw new NotFoundException(
+        `Medida ${id_medida} no encontrada para el insumo ${id_insumo}`,
+      );
+    }
+    return medida;
+  }
+
+  // La medida base (factor_a_base = 1) se crea sola al registrar el insumo
+  // y no debe editarse ni eliminarse: romperla dejaría al insumo sin su
+  // unidad de referencia.
+  private assertNoEsMedidaBase(
+    medida: { factor_a_base: unknown },
+    accion: 'editar' | 'eliminar',
+  ) {
+    if (Number(medida.factor_a_base) === 1) {
+      throw new ConflictException(
+        `No se puede ${accion} la medida base del insumo (factor_a_base = 1).`,
+      );
+    }
   }
 }

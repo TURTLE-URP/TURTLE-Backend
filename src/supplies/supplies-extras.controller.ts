@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
 } from '@nestjs/common';
@@ -12,15 +13,15 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SuppliesExtrasService } from './supplies-extras.service';
 import {
   CreateMedidaDto,
+  UpdateMedidaDto,
   UpsertAlertaAlmacenDto,
   UpsertAlertaGlobalDto,
 } from './dto/supply-extras.dto';
-import { Public } from '@src/auth/decorators/public.decorator';
 
 // NOTA: requiere el schema de la propuesta ya aplicado (ver
 // propuesta-schema-alertas-stock.md). No registrar este controller en el
 // módulo hasta que la migración esté corrida.
-@Public()
+
 @ApiTags('Insumos - Detalle')
 @ApiBearerAuth('bearer')
 // TODO: agregar los mismos guards/roles que usa SuppliesController
@@ -40,6 +41,25 @@ export class SuppliesExtrasController {
   @ApiOperation({ summary: 'Agregar una medida alterna al insumo' })
   createMedida(@Param('id', ParseIntPipe) id: number, @Body() dto: CreateMedidaDto) {
     return this.extrasService.createMedida(id, dto);
+  }
+
+  @Patch('medidas/:medidaId')
+  @ApiOperation({ summary: 'Editar una medida alterna (no permitido sobre la medida base)' })
+  updateMedida(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('medidaId', ParseIntPipe) medidaId: number,
+    @Body() dto: UpdateMedidaDto,
+  ) {
+    return this.extrasService.updateMedida(id, medidaId, dto);
+  }
+
+  @Delete('medidas/:medidaId')
+  @ApiOperation({ summary: 'Eliminar una medida alterna (no permitido sobre la medida base)' })
+  removeMedida(
+    @Param('id', ParseIntPipe) id: number,
+    @Param('medidaId', ParseIntPipe) medidaId: number,
+  ) {
+    return this.extrasService.removeMedida(id, medidaId);
   }
 
   // ---------- Validación de eliminación ----------

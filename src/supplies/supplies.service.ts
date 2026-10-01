@@ -48,11 +48,20 @@ function toSupplyResponse(
 export class SuppliesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(dto: CreateSupplyDto): Promise<SupplyResponseEntity> {
-    try {
-      const count = await this.prisma.insumo.count();
-      const codigo = 'INS-' + String(count + 1).padStart(3, '0');
-      const insumo = await this.prisma.insumo.create({
+  // Genera el siguiente código secuencial: INS-0001, INS-0002...
+  // Cuenta TODOS los insumos (incluidos los eliminados lógicamente) para
+  // no reutilizar un código que ya existió alguna vez.
+  private async generarCodigo(): Promise<string> {
+    const total = await this.prisma.insumo.count();
+    return `INS-${String(total + 1).padStart(4, '0')}`;
+  }
+
+  // Crea el insumo y, en la misma transacción, registra su unidad base
+  // también como medida alterna propia (factor_a_base = 1), para que
+  // aparezca desde el inicio en /supplies/:id/medidas.
+  private async crearInsumoConMedidaBase(dto: CreateSupplyDto, codigo: string) {
+    return this.prisma.$transaction(async (tx) => {
+      const insumo = await tx.insumo.create({
         data: {
           nombre: dto.nombre,
           descripcion: dto.descripcion,
@@ -63,12 +72,49 @@ export class SuppliesService {
         include,
       });
 
+      await tx.insumo_Medidas.create({
+        data: {
+          id_insumo: insumo.id,
+          nombre: insumo.unidad_base.nombre,
+          abreviatura: insumo.unidad_base.abreviatura,
+          factor_a_base: '1',
+          uso: 'todo',
+        },
+      });
+
+      return insumo;
+    });
+  }
+
+  async create(dto: CreateSupplyDto): Promise<SupplyResponseEntity> {
+    const codigo = await this.generarCodigo();
+    try {
+      const insumo = await this.crearInsumoConMedidaBase(dto, codigo);
       // Recién creado: sin stocks todavía.
       return toResponse(
         SupplyResponseEntity,
-        toSupplyResponse(insumo as unknown as SupplyRow, 0),
+        toSupplyResponse(insumo as SupplyRow, 0),
       );
     } catch (e) {
+      // Carrera improbable: si dos creaciones concurrentes calculan el mismo
+      // código, P2002 avisa del choque y se reintenta una vez con el conteo
+      // actualizado.
+      const code = (e as { code?: string })?.code;
+      if (code === 'P2002') {
+        const codigoReintento = await this.generarCodigo();
+        try {
+          const insumo = await this.crearInsumoConMedidaBase(
+            dto,
+            codigoReintento,
+          );
+          return toResponse(
+            SupplyResponseEntity,
+            toSupplyResponse(insumo as unknown as SupplyRow, 0),
+          );
+        } catch (e2) {
+          this.handleDbError(e2);
+        }
+      }
       this.handleDbError(e);
     }
   }

@@ -12,10 +12,7 @@ export class CreateSupplyDto {
   @IsString()
   descripcion?: string;
 
-  @ApiProperty({
-    example: 1,
-    description: 'ID de la unidad base (Unidad_Medida)',
-  })
+  @ApiProperty({ example: 1, description: 'ID de la unidad base (Unidad_Medida)' })
   @IsInt()
   id_unidad_base!: number;
 }
