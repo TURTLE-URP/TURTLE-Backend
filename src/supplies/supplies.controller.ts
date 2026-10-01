@@ -24,7 +24,11 @@ import { SuppliesService } from './supplies.service';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
 import { FindSuppliesQueryDto } from './dto/find-supplies-query.dto';
-import { SupplyResponseEntity } from './entities/supply-response.entity';
+import { FindUnitsQueryDto } from './dto/find-units-query.dto';
+import {
+  SupplyResponseEntity,
+  SupplyUnitResponseEntity,
+} from './entities/supply-response.entity';
 import { PaginatedSuppliesResponse } from './entities/paginated-supplies-response.entity';
 import { SupplyDeletedEntity } from './entities/supply-deleted.entity';
 import { Public } from '@src/auth/decorators/public.decorator';
@@ -70,6 +74,20 @@ export class SuppliesController {
   })
   findAll(@Query() query: FindSuppliesQueryDto) {
     return this.suppliesService.findAll(query);
+  }
+
+  @Get('units/base')
+  @ApiOperation({
+    summary: 'Listar unidades base',
+    description:
+      'Devuelve todas las unidades base registradas (Unidad_Medida). Solo `id`, `nombre` y `abreviatura`. Útil para los selects de creación/edición de insumos. Acepta `search` opcional por nombre o abreviatura.',
+  })
+  @ApiOkResponse({
+    type: [SupplyUnitResponseEntity],
+    description: 'Catálogo de unidades base.',
+  })
+  findUnidadesBase(@Query() query: FindUnitsQueryDto) {
+    return this.suppliesService.findUnidadesBase(query);
   }
 
   @Get(':id')

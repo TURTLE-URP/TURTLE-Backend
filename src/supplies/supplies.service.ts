@@ -11,10 +11,15 @@ import { FindSuppliesQueryDto } from './dto/find-supplies-query.dto';
 import {
   toPaginatedResponse,
   toResponse,
+  toResponseMany,
 } from '@src/common/utils/serializer.util';
-import { SupplyResponseEntity } from './entities/supply-response.entity';
+import {
+  SupplyResponseEntity,
+  SupplyUnitResponseEntity,
+} from './entities/supply-response.entity';
 import { PaginatedSuppliesResponse } from './entities/paginated-supplies-response.entity';
 import { SupplyDeletedEntity } from './entities/supply-deleted.entity';
+import { FindUnitsQueryDto } from './dto/find-units-query.dto';
 
 // No hay columna de stock global en Insumo: el stock global es
 // SUM(Stock_Almacen.stock_actual). No se expone detalle por almacén.
@@ -226,6 +231,26 @@ export class SuppliesService {
       id,
       message: `Insumo ${id} eliminado`,
     });
+  }
+
+  // Catálogo de unidades base (Unidad_Medida): solo id, nombre y abreviatura.
+  async findUnidadesBase(
+    query?: FindUnitsQueryDto,
+  ): Promise<SupplyUnitResponseEntity[]> {
+    const search = query?.search?.trim();
+    const rows = await this.prisma.unidad_Medida.findMany({
+      where: search
+        ? {
+            OR: [
+              { nombre: { contains: search, mode: 'insensitive' } },
+              { abreviatura: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : undefined,
+      select: { id: true, nombre: true, abreviatura: true },
+      orderBy: { nombre: 'asc' },
+    });
+    return toResponseMany(SupplyUnitResponseEntity, rows);
   }
 
   private handleDbError(e: unknown): never {
