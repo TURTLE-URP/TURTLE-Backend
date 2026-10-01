@@ -21,6 +21,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { WorkersModule } from './workers/workers.module';
 import { SuppliesModule } from './supplies/supplies.module';
 import { StoresModule } from './stores/stores.module';
+import { InventoryModule } from './inventory/inventory.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -42,6 +43,7 @@ import { StoresModule } from './stores/stores.module';
     WorkersModule,
     SuppliesModule,
     StoresModule,
+    InventoryModule,
   ],
   controllers: [AppController],
   providers: [
