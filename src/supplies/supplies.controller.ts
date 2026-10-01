@@ -9,15 +9,11 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SuppliesService } from './supplies.service';
 import { CreateSupplyDto } from './dto/create-supply.dto';
 import { UpdateSupplyDto } from './dto/update-supply.dto';
+import { FindSuppliesQueryDto } from './dto/find-supplies-query.dto';
 import { Public } from '@src/auth/decorators/public.decorator';
 
 @ApiTags('Insumos')
@@ -37,13 +33,8 @@ export class SuppliesController {
 
   @Get()
   @ApiOperation({ summary: 'Listar insumos (paginado, 10 por página)' })
-  @ApiQuery({ name: 'nombre', required: false })
-  @ApiQuery({ name: 'page', required: false, example: 1 })
-  findAll(@Query('nombre') nombre?: string, @Query('page') page?: string) {
-    return this.suppliesService.findAll(
-      nombre,
-      page ? Math.max(1, +page || 1) : 1,
-    );
+  findAll(@Query() query: FindSuppliesQueryDto) {
+    return this.suppliesService.findAll(query);
   }
 
   @Get(':id')
