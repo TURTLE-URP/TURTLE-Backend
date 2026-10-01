@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import {
   IsEnum,
   IsInt,
@@ -28,11 +28,6 @@ export class UpsertAlertaGlobalDto {
   @IsNumber()
   @IsPositive()
   stock_deseado?: number;
- 
-  // TEMPORAL: cuando se saque del token (JWT), eliminar este campo
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  usuario_id!: number;
 }
  
 // ---------- Alerta por Almacén (reabastecimiento interno) ----------
@@ -52,11 +47,6 @@ export class UpsertAlertaAlmacenDto {
   @IsNumber()
   @IsPositive()
   cantidad_reponer?: number;
- 
-  // TEMPORAL: cuando se saque del token (JWT), eliminar este campo
-  @ApiProperty({ example: 1 })
-  @IsInt()
-  usuario_id!: number;
 }
  
 // ---------- Medidas alternas ----------
@@ -81,25 +71,4 @@ export class CreateMedidaDto {
   uso?: MedidaUso;
 }
  
-export class UpdateMedidaDto {
-  @ApiPropertyOptional({ example: 'Saco' })
-  @IsOptional()
-  @IsString()
-  nombre?: string;
- 
-  @ApiPropertyOptional({ example: 'saco' })
-  @IsOptional()
-  @IsString()
-  abreviatura?: string;
- 
-  @ApiPropertyOptional({ example: 50, description: 'Factor de conversión a la unidad base' })
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  factor_a_base?: number;
- 
-  @ApiPropertyOptional({ enum: MedidaUso, example: MedidaUso.PRODUCTOS_PROVEEDOR })
-  @IsOptional()
-  @IsEnum(MedidaUso)
-  uso?: MedidaUso;
-}
+export class UpdateMedidaDto extends PartialType(CreateMedidaDto) {}

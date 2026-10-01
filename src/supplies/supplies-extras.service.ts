@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,11 +11,80 @@ import {
   UpsertAlertaAlmacenDto,
   UpsertAlertaGlobalDto,
 } from './dto/supply-extras.dto';
+import { toResponse, toResponseMany } from '@src/common/utils/serializer.util';
+import {
+  MedidaDeletedEntity,
+  MedidaResponseEntity,
+} from './entities/medida-response.entity';
+import {
+  AlertaAlmacenResponseEntity,
+  AlertaDeletedEntity,
+  AlertaGlobalResponseEntity,
+  SupplyAlertasResponseEntity,
+} from './entities/alerta-response.entity';
+import { EliminableResponseEntity } from './entities/eliminable-response.entity';
 
 // NOTA: este servicio asume aplicado el schema de la propuesta
 // (Alerta_Global, Alerta_Almacen, Insumo_Medidas.uso, Stock_Almacen sin
 // stock_min/stock_ideal). No usar hasta que la migración esté aprobada
 // y corrida.
+
+type MedidaRow = {
+  id: number;
+  nombre: string;
+  abreviatura: string;
+  factor_a_base: unknown;
+  uso: string | null;
+};
+
+type AlertaGlobalRow = {
+  id: number;
+  stock_min: unknown;
+  stock_deseado: unknown;
+};
+
+type AlertaAlmacenRow = {
+  id: number;
+  id_almacen: number;
+  minimo_alerta: unknown;
+  cantidad_reponer: unknown;
+  almacen: { id: number; codigo: string; nombre: string };
+};
+
+function toMedidaResponse(row: MedidaRow): MedidaResponseEntity {
+  return {
+    id: row.id,
+    nombre: row.nombre,
+    abreviatura: row.abreviatura,
+    factorABase: Number(row.factor_a_base),
+    uso: row.uso,
+  };
+}
+
+function toAlertaGlobalResponse(
+  row: AlertaGlobalRow,
+): AlertaGlobalResponseEntity {
+  return {
+    id: row.id,
+    stockMin: Number(row.stock_min),
+    stockDeseado:
+      row.stock_deseado == null ? null : Number(row.stock_deseado),
+  };
+}
+
+function toAlertaAlmacenResponse(
+  row: AlertaAlmacenRow,
+): AlertaAlmacenResponseEntity {
+  return {
+    id: row.id,
+    idAlmacen: row.id_almacen,
+    codigoAlmacen: row.almacen.codigo,
+    nombreAlmacen: row.almacen.nombre,
+    minimoAlerta: Number(row.minimo_alerta),
+    cantidadReponer:
+      row.cantidad_reponer == null ? null : Number(row.cantidad_reponer),
+  };
+}
 
 @Injectable()
 export class SuppliesExtrasService {
@@ -22,9 +92,9 @@ export class SuppliesExtrasService {
 
   // ---------- 1. Medidas alternas ----------
 
-  async getMedidas(id_insumo: number) {
+  async getMedidas(id_insumo: number): Promise<MedidaResponseEntity[]> {
     await this.assertInsumoExiste(id_insumo);
-    return this.prisma.insumo_Medidas.findMany({
+    const rows = await this.prisma.insumo_Medidas.findMany({
       where: { id_insumo },
       select: {
         id: true,
@@ -35,26 +105,56 @@ export class SuppliesExtrasService {
       },
       orderBy: { id: 'asc' },
     });
+    return toResponseMany(
+      MedidaResponseEntity,
+      rows.map((r) => toMedidaResponse(r as unknown as MedidaRow)),
+    );
   }
 
-  async createMedida(id_insumo: number, dto: CreateMedidaDto) {
+  async createMedida(
+    id_insumo: number,
+    dto: CreateMedidaDto,
+  ): Promise<MedidaResponseEntity> {
     await this.assertInsumoExiste(id_insumo);
-    return this.prisma.insumo_Medidas.create({
-      data: { ...dto, id_insumo },
-    });
+    try {
+      const row = await this.prisma.insumo_Medidas.create({
+        data: { ...dto, id_insumo },
+      });
+      return toResponse(
+        MedidaResponseEntity,
+        toMedidaResponse(row as unknown as MedidaRow),
+      );
+    } catch (e) {
+      this.handleDbError(e);
+    }
   }
 
-  async updateMedida(id_insumo: number, id_medida: number, dto: UpdateMedidaDto) {
+  async updateMedida(
+    id_insumo: number,
+    id_medida: number,
+    dto: UpdateMedidaDto,
+  ): Promise<MedidaResponseEntity> {
     const medida = await this.assertMedidaExiste(id_insumo, id_medida);
     this.assertNoEsMedidaBase(medida, 'editar');
 
-    return this.prisma.insumo_Medidas.update({
-      where: { id: id_medida },
-      data: dto,
-    });
+    try {
+      const row = await this.prisma.insumo_Medidas.update({
+        where: { id: id_medida },
+        data: dto,
+      });
+      return toResponse(
+        MedidaResponseEntity,
+        toMedidaResponse(row as unknown as MedidaRow),
+      );
+    } catch (e) {
+      this.handleDbError(e);
+    }
   }
 
-  async removeMedida(id_insumo: number, id_medida: number) {
+  async removeMedida(
+    id_insumo: number,
+    id_medida: number,
+  ): Promise<MedidaDeletedEntity> {
     const medida = await this.assertMedidaExiste(id_insumo, id_medida);
     this.assertNoEsMedidaBase(medida, 'eliminar');
 
@@ -78,12 +178,15 @@ export class SuppliesExtrasService {
     }
 
     await this.prisma.insumo_Medidas.delete({ where: { id: id_medida } });
-    return { id: id_medida, deleted: true };
+    return toResponse(MedidaDeletedEntity, {
+      id: id_medida,
+      message: `Medida ${id_medida} eliminada`,
+    });
   }
 
   // ---------- 2. Validación de eliminación (3 criterios) ----------
 
-  async getEliminable(id_insumo: number) {
+  async getEliminable(id_insumo: number): Promise<EliminableResponseEntity> {
     const insumo = await this.assertInsumoExiste(id_insumo);
 
     const stocks = await this.prisma.stock_Almacen.findMany({
@@ -134,18 +237,20 @@ export class SuppliesExtrasService {
       { criterio: 'sin_recetas_activas', cumple: sinRecetas, detalle: detalleRecetas },
     ];
 
-    return {
-      id_insumo,
+    return toResponse(EliminableResponseEntity, {
+      idInsumo: id_insumo,
       codigo: insumo.codigo,
       nombre: insumo.nombre,
       eliminable: criterios.every((c) => c.cumple),
       criterios,
-    };
+    });
   }
 
   // ---------- 3. Alertas de stock ----------
 
-  async getAlertasByInsumo(id_insumo: number) {
+  async getAlertasByInsumo(
+    id_insumo: number,
+  ): Promise<SupplyAlertasResponseEntity> {
     await this.assertInsumoExiste(id_insumo);
 
     const [global, porAlmacen] = await Promise.all([
@@ -157,41 +262,91 @@ export class SuppliesExtrasService {
       }),
     ]);
 
-    return { global, por_almacen: porAlmacen };
+    return toResponse(SupplyAlertasResponseEntity, {
+      global: global
+        ? toAlertaGlobalResponse(global as unknown as AlertaGlobalRow)
+        : null,
+      porAlmacen: porAlmacen.map((r) =>
+        toAlertaAlmacenResponse(r as unknown as AlertaAlmacenRow),
+      ),
+    });
   }
 
-  async upsertAlertaGlobal(id_insumo: number, dto: UpsertAlertaGlobalDto) {
+  async upsertAlertaGlobal(
+    id_insumo: number,
+    dto: UpsertAlertaGlobalDto,
+  ): Promise<AlertaGlobalResponseEntity> {
     await this.assertInsumoExiste(id_insumo);
-    const { usuario_id, ...umbrales } = dto;
 
-    return this.prisma.alerta_Global.upsert({
-      where: { id_insumo },
-      create: { id_insumo, ...umbrales, created_by: usuario_id },
-      update: { ...umbrales, updated_by: usuario_id, updated_at: new Date() },
-    });
+    try {
+      const row = await this.prisma.alerta_Global.upsert({
+        where: { id_insumo },
+        create: { id_insumo, ...dto, created_by: 999999 },
+        update: { ...dto, updated_by: 999999, updated_at: new Date() },
+      });
+      return toResponse(
+        AlertaGlobalResponseEntity,
+        toAlertaGlobalResponse(row as unknown as AlertaGlobalRow),
+      );
+    } catch (e) {
+      this.handleDbError(e);
+    }
   }
 
-  async upsertAlertaAlmacen(id_insumo: number, dto: UpsertAlertaAlmacenDto) {
+  async upsertAlertaAlmacen(
+    id_insumo: number,
+    dto: UpsertAlertaAlmacenDto,
+  ): Promise<AlertaAlmacenResponseEntity> {
     await this.assertInsumoExiste(id_insumo);
-    const { id_almacen, usuario_id, ...umbrales } = dto;
+    const { id_almacen, ...umbrales } = dto;
 
-    return this.prisma.alerta_Almacen.upsert({
-      where: { id_insumo_id_almacen: { id_insumo, id_almacen } },
-      create: { id_insumo, id_almacen, ...umbrales, created_by: usuario_id },
-      update: { ...umbrales, updated_by: usuario_id, updated_at: new Date() },
+    try {
+      const row = await this.prisma.alerta_Almacen.upsert({
+        where: { id_insumo_id_almacen: { id_insumo, id_almacen } },
+        create: { id_insumo, id_almacen, ...umbrales, created_by: 999999 },
+        update: { ...umbrales, updated_by: 999999, updated_at: new Date() },
+        include: {
+          almacen: { select: { id: true, codigo: true, nombre: true } },
+        },
+      });
+      return toResponse(
+        AlertaAlmacenResponseEntity,
+        toAlertaAlmacenResponse(row as unknown as AlertaAlmacenRow),
+      );
+    } catch (e) {
+      this.handleDbError(e);
+    }
+  }
+
+  async removeAlertaAlmacen(
+    id_insumo: number,
+    id_almacen: number,
+  ): Promise<AlertaDeletedEntity> {
+    try {
+      await this.prisma.alerta_Almacen.delete({
+        where: { id_insumo_id_almacen: { id_insumo, id_almacen } },
+      });
+    } catch (e) {
+      this.handleDbError(e);
+    }
+    return toResponse(AlertaDeletedEntity, {
+      idInsumo: id_insumo,
+      idAlmacen: id_almacen,
+      message: `Alerta del almacén ${id_almacen} eliminada`,
     });
   }
 
-  async removeAlertaAlmacen(id_insumo: number, id_almacen: number) {
-    await this.prisma.alerta_Almacen.delete({
-      where: { id_insumo_id_almacen: { id_insumo, id_almacen } },
+  async removeAlertaGlobal(id_insumo: number): Promise<AlertaDeletedEntity> {
+    try {
+      await this.prisma.alerta_Global.delete({ where: { id_insumo } });
+    } catch (e) {
+      this.handleDbError(e);
+    }
+    return toResponse(AlertaDeletedEntity, {
+      idInsumo: id_insumo,
+      idAlmacen: null,
+      message: `Alerta global del insumo ${id_insumo} eliminada`,
     });
-    return { id_insumo, id_almacen, deleted: true };
-  }
-
-  async removeAlertaGlobal(id_insumo: number) {
-    await this.prisma.alerta_Global.delete({ where: { id_insumo } });
-    return { id_insumo, deleted: true };
   }
 
   // ---------- Funciones de evaluación ----------
@@ -271,5 +426,19 @@ export class SuppliesExtrasService {
         `No se puede ${accion} la medida base del insumo (factor_a_base = 1).`,
       );
     }
+  }
+
+  private handleDbError(e: unknown): never {
+    const code = (e as { code?: string })?.code;
+    // P2025: registro a eliminar/actualizar no existe.
+    if (code === 'P2025')
+      throw new NotFoundException('Registro no encontrado');
+    if (code === 'P2002')
+      throw new ConflictException('Registro duplicado');
+    if (code === 'P2003')
+      throw new BadRequestException(
+        'Referencia inválida (insumo o almacén no existe)',
+      );
+    throw e;
   }
 }
