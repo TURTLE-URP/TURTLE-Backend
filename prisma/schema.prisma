@@ -176,6 +176,7 @@ model Platos_Menu {
   descripcion String
   precio Decimal @db.Decimal(10, 2)
   categoria platos_categoria
+  codigo String?
   created_at DateTime @default(now()) @db.Timestamp()
   created_by Int
   updated_at DateTime? @db.Timestamp()
