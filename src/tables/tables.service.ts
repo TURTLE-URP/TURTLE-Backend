@@ -1,10 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { pedido_tipo, Prisma } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { UpdateTableDto } from './dto/update-table.dto';
 import { UpdateTableOcupadoDto } from './dto/update-table-ocupado.dto';
@@ -87,14 +88,54 @@ export class TablesService {
     updatedBy?: number,
   ) {
     const table = await this.findByNumber(tableNumber);
-    return this.prisma.mesa.update({
-      where: { id: table.id },
-      data: {
-        ocupado: dto.ocupado,
-        updated_at: new Date(),
-        ...(updatedBy != null ? { updated_by: updatedBy } : {}),
-      },
-      include: mesaWithPedido,
+
+    if (!dto.ocupado) {
+      return this.prisma.mesa.update({
+        where: { id: table.id },
+        data: {
+          ocupado: false,
+          updated_at: new Date(),
+          ...(updatedBy != null ? { updated_by: updatedBy } : {}),
+        },
+        include: mesaWithPedido,
+      });
+    }
+
+    const comensales = dto.comensales ?? 0;
+    if (comensales > table.capacidad) {
+      throw new BadRequestException(
+        `La cantidad de comensales supera la capacidad de la mesa (${table.capacidad})`,
+      );
+    }
+
+    const documento = dto.documentoClienteLocal?.trim();
+    const mozo = dto.mozo?.trim();
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.pedido.create({
+        data: {
+          codigo: `PED-${Date.now().toString(36).toUpperCase()}`,
+          tipo: pedido_tipo.local,
+          IGV: 0,
+          subtotal: 0,
+          id_mesa: table.id,
+          nombre_cliente_local: dto.nombreClienteLocal,
+          documento_cliente_local: documento ? documento : null,
+          comensales,
+          nombre_mozo: mozo ? mozo : null,
+          ...(updatedBy != null ? { created_by: updatedBy } : {}),
+        },
+      });
+
+      return tx.mesa.update({
+        where: { id: table.id },
+        data: {
+          ocupado: true,
+          updated_at: new Date(),
+          ...(updatedBy != null ? { updated_by: updatedBy } : {}),
+        },
+        include: mesaWithPedido,
+      });
     });
   }
 }
