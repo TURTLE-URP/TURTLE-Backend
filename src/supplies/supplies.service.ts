@@ -115,10 +115,7 @@ export class SuppliesService {
     );
 
     const items = rows.map((r) =>
-      toSupplyResponse(
-        r as unknown as SupplyRow,
-        stockByInsumo.get(r.id) ?? 0,
-      ),
+      toSupplyResponse(r as unknown as SupplyRow, stockByInsumo.get(r.id) ?? 0),
     );
 
     return toPaginatedResponse(
@@ -151,7 +148,7 @@ export class SuppliesService {
     try {
       const insumo = await this.prisma.insumo.update({
         where: { id },
-        data: { ...dto, updated_at: new Date() },
+        data: { ...dto, updated_at: new Date(), updated_by: 999999 },
         include,
       });
       const stockActual = await this.getGlobalStock(id);
@@ -177,7 +174,7 @@ export class SuppliesService {
     await this.findOne(id);
     await this.prisma.insumo.update({
       where: { id },
-      data: { deleted_at: new Date() },
+      data: { deleted_at: new Date(), deleted_by: 999999 },
     });
     return toResponse(SupplyDeletedEntity, {
       id,
