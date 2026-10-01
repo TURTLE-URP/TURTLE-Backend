@@ -17,17 +17,17 @@ async function bootstrap() {
       'Documentación de los endpoints de la API utilizando Swagger.',
     )
     .setVersion('1.0')
-    .addApiKey(
-      {
-        type: 'apiKey',
-        in: 'header',
-        name: 'x-api-key',
-        description:
-          'Clave compartida con el frontend (VITE_API_KEY = API_KEY)',
-      },
-      'api-key',
-    )
-    .addSecurityRequirements('api-key')
+    // .addApiKey(
+    //   {
+    //     type: 'apiKey',
+    //     in: 'header',
+    //     name: 'x-api-key',
+    //     description:
+    //       'Clave compartida con el frontend (VITE_API_KEY = API_KEY)',
+    //   },
+    //   'api-key',
+    // )
+    // .addSecurityRequirements('api-key')
     .addBearerAuth(
       {
         type: 'http',
