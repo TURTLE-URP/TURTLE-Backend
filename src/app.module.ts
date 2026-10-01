@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 import { HealthModule } from './health/health.module';
 import { AuthModule } from './auth/auth.module';
+import { ApiKeyGuard } from './auth/guards/api-key.guard';
 import { JwtAuthGuard } from './auth/guards//jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import { TablesModule } from './tables/tables.module';
@@ -48,6 +49,7 @@ import { InventoryModule } from './inventory/inventory.module';
   controllers: [AppController],
   providers: [
     AppService,
+    { provide: APP_GUARD, useClass: ApiKeyGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

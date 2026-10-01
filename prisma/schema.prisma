@@ -100,6 +100,8 @@ model Pedido {
   subtotal Decimal @db.Decimal(10, 2)
   documento_cliente_local String?
   nombre_cliente_local String?
+  comensales Int? @db.SmallInt
+  nombre_mozo String?
   tipo pedido_tipo
   id_mesa Int?
   id_cliente_digital Int?

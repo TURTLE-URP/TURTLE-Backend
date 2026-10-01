@@ -95,7 +95,7 @@ export class UsersService {
     });
   }
 
-  async remove(userId: number, deletedBy: number) {
+  async remove(userId: number, deletedBy: number | null) {
     const existing = await this.prisma.usuario.findFirst({
       where: { id: userId, deleted_at: null },
       include: { trabajador: true, cliente: true },

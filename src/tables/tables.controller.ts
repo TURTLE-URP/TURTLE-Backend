@@ -8,27 +8,36 @@ import {
   Patch,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
+  // ApiBearerAuth,
+  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
-import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+// import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+import { Public } from '@src/auth/decorators/public.decorator';
 import { TablesService } from './tables.service';
+import { UpdateTableDto } from './dto/update-table.dto';
 import { UpdateTableOcupadoDto } from './dto/update-table-ocupado.dto';
 
 @Controller('api/tables')
 @ApiTags('tables')
-@ApiBearerAuth()
+// Anfitrión: estos endpoints no exigen token. La pantalla de estado
+// debe cargar aunque la sesión esté vencida.
+// @ApiBearerAuth()
+@Public()
 export class TablesController {
   constructor(
     @Inject(TablesService) private readonly tablesService: TablesService,
   ) {}
 
   @Get()
-  @ApiOperation({ summary: 'Lista mesas activas ordenadas por número.' })
+  @ApiOperation({
+    summary:
+      'Lista mesas activas ordenadas por número, con el pedido local abierto más reciente.',
+  })
   @ApiOkResponse({ description: 'Listado de mesas.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   findAll() {
@@ -44,6 +53,22 @@ export class TablesController {
     return this.tablesService.findByNumber(tableNumber);
   }
 
+  @Patch(':tableNumber')
+  @ApiOperation({
+    summary: 'Actualiza número, capacidad, piso y ocupación de la mesa.',
+  })
+  @ApiOkResponse({ description: 'Mesa actualizada.' })
+  @ApiNotFoundResponse({ description: 'Mesa no encontrada.' })
+  @ApiConflictResponse({ description: 'El número de mesa ya existe.' })
+  @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
+  update(
+    @Param('tableNumber', ParseIntPipe) tableNumber: number,
+    @Body() dto: UpdateTableDto,
+    // @CurrentUserId() updatedBy: number,
+  ) {
+    return this.tablesService.update(tableNumber, dto);
+  }
+
   @Patch(':tableNumber/ocupado')
   @ApiOperation({ summary: 'Actualiza el flag de ocupación de la mesa.' })
   @ApiOkResponse({ description: 'Mesa actualizada.' })
@@ -52,8 +77,8 @@ export class TablesController {
   updateOcupado(
     @Param('tableNumber', ParseIntPipe) tableNumber: number,
     @Body() dto: UpdateTableOcupadoDto,
-    @CurrentUserId() updatedBy: number,
+    // @CurrentUserId() updatedBy: number,
   ) {
-    return this.tablesService.updateOcupado(tableNumber, dto, updatedBy);
+    return this.tablesService.updateOcupado(tableNumber, dto);
   }
 }

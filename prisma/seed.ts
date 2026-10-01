@@ -417,6 +417,14 @@ async function main() {
   }
 
   const mesa1 = await mesa('M-P1-01', 1, 'piso_1');
+  await prisma.mesa.update({
+    where: { id: mesa1.id },
+    data: {
+      ocupado: true,
+      updated_at: now(),
+      updated_by: ADMIN_ID,
+    },
+  });
   await mesa('M-P1-02', 2, 'piso_1');
   await mesa('M-P1-03', 3, 'piso_1');
   await mesa('M-P2-01', 5, 'piso_2');
@@ -424,13 +432,14 @@ async function main() {
   // ---------- Pedido + detalle + pago de ejemplo ----------
   const pedido = await prisma.pedido.upsert({
     where: { codigo: 'PED-0001' },
-    update: {},
+    update: { nombre_cliente_local: 'Cliente Demo' },
     create: {
       codigo: 'PED-0001',
       IGV: '6.96',
       subtotal: '45.90',
       tipo: 'local',
       id_mesa: mesa1.id,
+      nombre_cliente_local: 'Cliente Demo',
       id_cliente_digital: demoClient.id,
       created_at: now(),
       created_by: ADMIN_ID,

@@ -10,18 +10,21 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
-  Inject,
 } from '@nestjs/common';
-import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+// import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
+import { Public } from '@src/auth/decorators/public.decorator';
 import { UsersService } from './users.service';
 import { CreateWorkerDto } from '@src/workers/dto/create-worker.dto';
 import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { FilterUsersDto } from './dto/filter-users.dto';
 
+// Temporal: sin login real el front manda un token de demo y el JWT lo rechaza.
+// @ApiBearerAuth()
+@Public()
 @Controller('users')
 export class UsersController {
-  constructor(@Inject(UsersService) private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {}
 
   @Post('worker')
   createWorker(@Body() createWorkerDto: CreateWorkerDto) {
@@ -65,8 +68,9 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   remove(
     @Param('id', ParseIntPipe) id: number,
-    @CurrentUserId() currentUserId: number,
+    // @CurrentUserId() currentUserId: number,
   ) {
-    return this.usersService.remove(id, currentUserId);
+    // Sin sesión no hay usuario que firme el borrado.
+    return this.usersService.remove(id, null);
   }
 }
