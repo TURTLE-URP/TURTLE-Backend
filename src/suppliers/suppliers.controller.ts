@@ -22,23 +22,27 @@ import {
   ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { CurrentUserId } from '@src/auth/decorators/current-user.decorator';
-import { Roles } from '@src/auth/decorators/roles.decorator';
 import { SuppliersService } from './suppliers.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
 import { UpdateSupplierDto } from './dto/update-supplier.dto';
 import { SupplierEntity } from './entities/supplier.entity';
-import {FindSuppliersQueryDto} from './dto/find-suppliers-query.dto';
+import { FindSuppliersQueryDto } from './dto/find-suppliers-query.dto';
 import { Public } from '@src/auth/decorators/public.decorator';
 @ApiTags('Proveedores')
-@Roles('administrador', 'jefe')
+@ApiBearerAuth()
 @Controller('suppliers')
 @Public()
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Registra un proveedor, devuelve el proveedor creado.' })
-  @ApiCreatedResponse({ type: SupplierEntity, description: 'Proveedor creado.' })
+  @ApiOperation({
+    summary: 'Registra un proveedor, devuelve el proveedor creado.',
+  })
+  @ApiCreatedResponse({
+    type: SupplierEntity,
+    description: 'Proveedor creado.',
+  })
   @ApiBadRequestResponse({ description: 'DTO inválido.' })
   @ApiConflictResponse({ description: 'Código o RUC ya registrado.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
@@ -49,7 +53,10 @@ export class SuppliersController {
 
   @Get()
   @ApiOperation({ summary: 'Lista los proveedores activos.' })
-  @ApiOkResponse({ type: [SupplierEntity], description: 'Lista de proveedores.' })
+  @ApiOkResponse({
+    type: [SupplierEntity],
+    description: 'Lista de proveedores.',
+  })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
   findAll(@Query() query: FindSuppliersQueryDto) {
@@ -67,8 +74,13 @@ export class SuppliersController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualiza un proveedor, devuelve el proveedor actualizado.' })
-  @ApiOkResponse({ type: SupplierEntity, description: 'Proveedor actualizado.' })
+  @ApiOperation({
+    summary: 'Actualiza un proveedor, devuelve el proveedor actualizado.',
+  })
+  @ApiOkResponse({
+    type: SupplierEntity,
+    description: 'Proveedor actualizado.',
+  })
   @ApiBadRequestResponse({ description: 'DTO inválido.' })
   @ApiNotFoundResponse({ description: 'Proveedor no encontrado.' })
   @ApiConflictResponse({ description: 'Código o RUC ya registrado.' })
@@ -88,7 +100,10 @@ export class SuppliersController {
   @ApiNotFoundResponse({ description: 'Proveedor no encontrado.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
   @ApiForbiddenResponse({ description: 'Requiere rol administrador o jefe.' })
-  remove(@Param('id', ParseIntPipe) id: number, @CurrentUserId() userId: number) {
+  remove(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUserId() userId: number,
+  ) {
     return this.suppliersService.remove(id, userId);
   }
 }

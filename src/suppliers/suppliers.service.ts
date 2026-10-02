@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { CreateSupplierDto } from './dto/create-supplier.dto';
@@ -7,20 +11,20 @@ import { FindSuppliersQueryDto } from './dto/find-suppliers-query.dto';
 
 @Injectable()
 export class SuppliersService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(dto: CreateSupplierDto) {
-  const count = await this.prisma.proveedor.count();
-  const codigo = 'PRO-' + String(count + 1).padStart(3, '0');
-  try {
-    return await this.prisma.proveedor.create({
-      data: { ...dto, codigo, created_by: 999999 },
-    });
-  } catch (error) {
-    this.handleUniqueError(error);
-    throw error;
+    const count = await this.prisma.proveedor.count();
+    const codigo = 'PRO-' + String(count + 1).padStart(3, '0');
+    try {
+      return await this.prisma.proveedor.create({
+        data: { ...dto, codigo, created_by: 999999 },
+      });
+    } catch (error) {
+      this.handleUniqueError(error);
+      throw error;
+    }
   }
-}
 
   async findAll(query: FindSuppliersQueryDto) {
     const page = query.page ?? 1;
