@@ -132,6 +132,7 @@ model Mesa {
   updated_by Int?
   deleted_at DateTime? @db.Timestamp()
   deleted_by Int?
+  motivo_baja String? @db.Text
 
   pedidos Pedido[]
 }
