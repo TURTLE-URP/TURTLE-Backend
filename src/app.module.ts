@@ -49,7 +49,7 @@ import { InventoryModule } from './inventory/inventory.module';
   controllers: [AppController],
   providers: [
     AppService,
-    { provide: APP_GUARD, useClass: ApiKeyGuard },
+    // { provide: APP_GUARD, useClass: ApiKeyGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
   ],

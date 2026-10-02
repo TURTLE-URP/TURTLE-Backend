@@ -144,7 +144,8 @@ export class InventoryService {
       insumoId: String(row.stock.id_insumo),
       tipo,
       cantidad: Number(row.cantidad),
-      saldoResultante: Number(row.saldo_nuevo),
+      // Cambiamos 'saldoResultante' por 'saldo' para que la tabla del frontend lo reconozca
+      saldo: Number(row.saldo_nuevo), 
       fecha: row.created_at.toISOString(),
       responsable:
         (row.created_by ? responsables.get(row.created_by) : undefined) ??
