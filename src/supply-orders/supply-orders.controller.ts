@@ -27,7 +27,7 @@ import {
 @ApiTags('supply-orders')
 @ApiBearerAuth()
 export class SupplyOrdersController {
-  constructor(
+  /*constructor(
     @Inject(SupplyOrdersService)
     private readonly supplyOrdersService: SupplyOrdersService,
   ) {}
@@ -100,5 +100,5 @@ export class SupplyOrdersController {
     @CurrentUserId() actorId: number,
   ) {
     return this.supplyOrdersService.createOrders(dto, actorId);
-  }
+  }*/
 }

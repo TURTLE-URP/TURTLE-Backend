@@ -13,12 +13,14 @@ import {
 } from '@nestjs/terminus';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { Public } from '@src/auth/decorators/public.decorator';
+import { SkipApiKey } from '@src/auth/decorators/skip-api-key.decorator';
 
 const DATABASE_PING_TIMEOUT_MS = 2000;
 const MEMORY_HEAP_THRESHOLD_BYTES = 300 * 1024 * 1024;
 
 @ApiTags('health')
 @Public()
+@SkipApiKey()
 @Controller('health')
 export class HealthController {
   constructor(
