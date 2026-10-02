@@ -28,7 +28,6 @@ export class UsersService {
     const data: Prisma.UsuarioCreateInput = {
       email: dto.email,
       tipo_usuario: 'trabajador',
-      // Creamos el trabajador de forma anidada simultáneamente
       trabajador: {
         create: {
           nombre: dto.name,
@@ -40,10 +39,9 @@ export class UsersService {
       },
     };
 
-    // 3. Guardando el usuario en la BD
     const user = await this.prisma.usuario.create({
       data,
-      include: { trabajador: true }, // Incluimos el trabajador en la respuesta
+      include: { trabajador: true },
     });
 
     return { user, plainPassword };
@@ -132,7 +130,7 @@ export class UsersService {
   }
 
   private generateUserFirstPassword(length: number = 12) {
-    return randomBytes(length).toString('base64').slice(0, length); // Asegura la longitud exacta
+    return randomBytes(length).toString('base64').slice(0, length);
   }
 
   private async hashPassword(plain: string): Promise<string> {
@@ -141,29 +139,43 @@ export class UsersService {
   }
 
   async findAll(filters: FilterUsersDto) {
-    const { page = 1, limit = 10, tipo, search } = filters;
-    const skip = (page - 1) * limit;
+    const { page = 1, limit = 10, tipo, search, role, activo } = filters;
+
+    // Aseguramos que page y limit sean números válidos
+    const pageNumber = Math.max(1, Number(page));
+    const limitNumber = Math.max(1, Number(limit));
+    const skip = (pageNumber - 1) * limitNumber;
 
     const where: Prisma.UsuarioWhereInput = {
       deleted_at: null,
       ...(tipo ? { tipo_usuario: tipo } : {}),
+      ...(role || activo !== undefined
+        ? {
+            trabajador: {
+              ...(role ? { rol: role } : {}),
+              ...(activo !== undefined ? { activo } : {}),
+            },
+          }
+        : {}),
       ...(search
         ? {
             OR: [
               { email: { contains: search, mode: 'insensitive' } },
               { trabajador: { nombre: { contains: search, mode: 'insensitive' } } },
               { trabajador: { apellido: { contains: search, mode: 'insensitive' } } },
+              { cliente: { nombre_completo: { contains: search, mode: 'insensitive' } } },
             ],
           }
         : {}),
     };
 
-    const [total, data] = await Promise.all([
+    // Consulta concurrente con $transaction
+    const [total, data] = await this.prisma.$transaction([
       this.prisma.usuario.count({ where }),
       this.prisma.usuario.findMany({
         where,
         skip,
-        take: limit,
+        take: limitNumber,
         include: {
           trabajador: {
             select: { id: true, nombre: true, apellido: true, rol: true, activo: true },
@@ -174,12 +186,17 @@ export class UsersService {
       }),
     ]);
 
+    const totalPages = Math.ceil(total / limitNumber);
+
     return {
       data,
       meta: {
         total,
-        page,
-        lastPage: Math.ceil(total / limit),
+        page: pageNumber,
+        limit: limitNumber,
+        totalPages,
+        hasNextPage: pageNumber < totalPages,
+        hasPrevPage: pageNumber > 1,
       },
     };
   }
@@ -203,12 +220,11 @@ export class UsersService {
   }
 
   async update(id: number, dto: UpdateUserDto) {
-    await this.findById(id); // Valida existencia
+    await this.findById(id);
 
     const { email, name, lastName, role, password } = dto;
 
     return this.prisma.$transaction(async (tx) => {
-      // 1. Actualizar base en Usuario
       if (email) {
         await tx.usuario.update({
           where: { id },
@@ -216,7 +232,6 @@ export class UsersService {
         });
       }
 
-      // 2. Actualizar perfil Trabajador si aplica
       if (name || lastName || role || password) {
         const updateData: Record<string, any> = {};
         if (name) updateData.nombre = name;
@@ -253,5 +268,4 @@ export class UsersService {
 
     return { id, activo: newStatus, message: `Estado del trabajador cambiado a: ${newStatus ? 'Activo' : 'Inactivo'}` };
   }
-
 }
