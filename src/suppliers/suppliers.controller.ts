@@ -30,14 +30,13 @@ import { SupplierEntity } from './entities/supplier.entity';
 import {FindSuppliersQueryDto} from './dto/find-suppliers-query.dto';
 import { Public } from '@src/auth/decorators/public.decorator';
 @ApiTags('Proveedores')
-@ApiBearerAuth()
 @Roles('administrador', 'jefe')
 @Controller('suppliers')
+@Public()
 export class SuppliersController {
   constructor(private readonly suppliersService: SuppliersService) {}
 
   @Post()
-  @Public()
   @ApiOperation({ summary: 'Registra un proveedor, devuelve el proveedor creado.' })
   @ApiCreatedResponse({ type: SupplierEntity, description: 'Proveedor creado.' })
   @ApiBadRequestResponse({ description: 'DTO inválido.' })
@@ -49,7 +48,6 @@ export class SuppliersController {
   }
 
   @Get()
-  @Public()
   @ApiOperation({ summary: 'Lista los proveedores activos.' })
   @ApiOkResponse({ type: [SupplierEntity], description: 'Lista de proveedores.' })
   @ApiUnauthorizedResponse({ description: 'Token ausente o inválido.' })
@@ -59,7 +57,6 @@ export class SuppliersController {
   }
 
   @Get(':id')
-  @Public()
   @ApiOperation({ summary: 'Obtiene un proveedor por su id.' })
   @ApiOkResponse({ type: SupplierEntity, description: 'Proveedor encontrado.' })
   @ApiNotFoundResponse({ description: 'Proveedor no encontrado.' })
@@ -70,7 +67,6 @@ export class SuppliersController {
   }
 
   @Patch(':id')
-  @Public()
   @ApiOperation({ summary: 'Actualiza un proveedor, devuelve el proveedor actualizado.' })
   @ApiOkResponse({ type: SupplierEntity, description: 'Proveedor actualizado.' })
   @ApiBadRequestResponse({ description: 'DTO inválido.' })
@@ -87,7 +83,6 @@ export class SuppliersController {
   }
 
   @Delete(':id')
-  @Public()
   @ApiOperation({ summary: 'Elimina (borrado lógico) un proveedor.' })
   @ApiOkResponse({ type: SupplierEntity, description: 'Proveedor eliminado.' })
   @ApiNotFoundResponse({ description: 'Proveedor no encontrado.' })
