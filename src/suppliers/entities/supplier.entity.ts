@@ -1,1 +1,1 @@
-export class Supplier {}
+export class SupplierEntity {}
