@@ -5,7 +5,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.enableCors();
+  app.enableCors({
+    origin: true,
+    // allowedHeaders: ['Content-Type', 'Authorization'/*, 'x-api-key'*/],
+  });
   app.enableShutdownHooks();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   const config = new DocumentBuilder()
@@ -14,6 +17,17 @@ async function bootstrap() {
       'Documentación de los endpoints de la API utilizando Swagger.',
     )
     .setVersion('1.0')
+    // .addApiKey(
+    //   {
+    //     type: 'apiKey',
+    //     in: 'header',
+    //     name: 'x-api-key',
+    //     description:
+    //       'Clave compartida con el frontend (VITE_API_KEY = API_KEY)',
+    //   },
+    //   'api-key',
+    // )
+    // .addSecurityRequirements('api-key')
     .addBearerAuth(
       {
         type: 'http',

@@ -258,11 +258,129 @@
       where: { codigo: 'PP-POLLO-KG' },
       update: {},
       create: {
+<<<<<<< HEAD
         codigo: 'PP-POLLO-KG',
         nombre: 'Pollo entero x kg',
         id_insumo: pollo.id,
         id_insumo_medida: polloKg.id,
         factor_conversion: '1',
+=======
+        codigo,
+        nombre,
+        ubicacion,
+        descripcion: `${nombre} (demo)`,
+        created_at: now(),
+        created_by: ADMIN_ID,
+      },
+    });
+  }
+
+  const almacenPrincipal = await almacen(
+    'ALM-01',
+    'Almacén principal',
+    'Sótano',
+  );
+  const almacenCocina = await almacen(
+    'ALM-02',
+    'Almacén cocina',
+    'Primer piso',
+  );
+
+  // ---------- Stock por almacén (solo existencia física; sin umbrales) ----------
+  // CAMBIO: Stock_Almacen ya no tiene stock_min/stock_ideal (migración
+  // add_alertas_stock_y_uso_medidas). Esos umbrales ahora viven en
+  // Alerta_Global (a nivel insumo) y Alerta_Almacen (a nivel almacén).
+  async function stock(almacenId: number, insumoId: number) {
+    const existing = await prisma.stock_Almacen.findFirst({
+      where: { id_almacen: almacenId, id_insumo: insumoId },
+    });
+    if (existing) return existing;
+    return prisma.stock_Almacen.create({
+      data: {
+        id_almacen: almacenId,
+        id_insumo: insumoId,
+        stock_actual: '0',
+        updated_at: now(),
+      },
+    });
+  }
+
+  for (const ins of [pollo, arroz, papa, aceite, sal, huevo]) {
+    await stock(almacenPrincipal.id, ins.id);
+    await stock(almacenCocina.id, ins.id);
+  }
+
+  // ---------- Alertas de stock (reemplazan los umbrales que salieron de Stock_Almacen) ----------
+  // Alerta_Global: umbral único por insumo, para reabastecimiento externo (compra).
+  async function alertaGlobal(
+    insumoId: number,
+    stockMin: string,
+    stockDeseado: string,
+  ) {
+    return prisma.alerta_Global.upsert({
+      where: { id_insumo: insumoId },
+      update: {},
+      create: {
+        id_insumo: insumoId,
+        stock_min: stockMin,
+        stock_deseado: stockDeseado,
+        created_at: now(),
+        created_by: ADMIN_ID,
+      },
+    });
+  }
+
+  // Alerta_Almacen: umbral por combinación insumo+almacén, para traslado interno.
+  async function alertaAlmacen(
+    insumoId: number,
+    almacenId: number,
+    minimoAlerta: string,
+    cantidadReponer: string,
+  ) {
+    return prisma.alerta_Almacen.upsert({
+      where: { id_insumo_id_almacen: { id_insumo: insumoId, id_almacen: almacenId } },
+      update: {},
+      create: {
+        id_insumo: insumoId,
+        id_almacen: almacenId,
+        minimo_alerta: minimoAlerta,
+        cantidad_reponer: cantidadReponer,
+        created_at: now(),
+        created_by: ADMIN_ID,
+      },
+    });
+  }
+
+  for (const ins of [pollo, arroz, papa, aceite, sal, huevo]) {
+    // valores demo: equivalentes a los min/ideal originales (10/100 principal, 5/30 cocina)
+    await alertaGlobal(ins.id, '15', '130');
+    await alertaAlmacen(ins.id, almacenPrincipal.id, '10', '90');
+    await alertaAlmacen(ins.id, almacenCocina.id, '5', '25');
+  }
+
+  // ---------- Proveedor + producto ----------
+  const proveedor = await prisma.proveedor.upsert({
+    where: { codigo: 'PROV-01' },
+    update: {},
+    create: {
+      codigo: 'PROV-01',
+      ruc: '20100047218',
+      razon_social: 'Distribuidora Demo S.A.C.',
+      estado: 'ACTIVO',
+      condicion: 'HABIDO',
+      direccion: 'Av. Demo 123',
+      created_at: now(),
+      created_by: ADMIN_ID,
+    },
+  });
+
+  const contacto = await prisma.proveedor_Contacto.findFirst({
+    where: { id_proveedor: proveedor.id, contacto: '+51999999999' },
+  });
+  if (!contacto) {
+    await prisma.proveedor_Contacto.create({
+      data: {
+>>>>>>> e65064dd09fcfb6ec1d0d3a2d4cce0fe003b01a0
         id_proveedor: proveedor.id,
         created_at: now(),
         created_by: ADMIN_ID,
@@ -395,6 +513,7 @@
       },
     });
 
+<<<<<<< HEAD
     const detalles = await prisma.detalles_Pedido.count({
       where: { id_pedido: pedido.id },
     });
@@ -416,6 +535,49 @@
         codigo: 'PAG-0001',
         medio_pago: 'efectivo',
         monto: '52.86',
+=======
+  const mesa1 = await mesa('M-P1-01', 1, 'piso_1');
+  await prisma.mesa.update({
+    where: { id: mesa1.id },
+    data: {
+      ocupado: true,
+      updated_at: now(),
+      updated_by: ADMIN_ID,
+    },
+  });
+  await mesa('M-P1-02', 2, 'piso_1');
+  await mesa('M-P1-03', 3, 'piso_1');
+  await mesa('M-P2-01', 5, 'piso_2');
+
+  // ---------- Pedido + detalle + pago de ejemplo ----------
+  const pedido = await prisma.pedido.upsert({
+    where: { codigo: 'PED-0001' },
+    update: { nombre_cliente_local: 'Cliente Demo' },
+    create: {
+      codigo: 'PED-0001',
+      IGV: '6.96',
+      subtotal: '45.90',
+      tipo: 'local',
+      id_mesa: mesa1.id,
+      nombre_cliente_local: 'Cliente Demo',
+      id_cliente_digital: demoClient.id,
+      created_at: now(),
+      created_by: ADMIN_ID,
+      updated_at: now(),
+      updated_by: ADMIN_ID,
+    },
+  });
+
+  const detalles = await prisma.detalles_Pedido.count({
+    where: { id_pedido: pedido.id },
+  });
+  if (detalles === 0) {
+    await prisma.detalles_Pedido.create({
+      data: {
+        id_menu_item: polloBrasa.id,
+        cantidad: 1,
+        subtotal: '45.90',
+>>>>>>> e65064dd09fcfb6ec1d0d3a2d4cce0fe003b01a0
         id_pedido: pedido.id,
         created_at: now(),
       },
@@ -430,6 +592,7 @@
     console.log('     jefe@turtle.pe · mozo@turtle.pe');
   }
 
+<<<<<<< HEAD
   main()
     .catch((e) => {
       console.error('❌ Seed falló:', e);
@@ -439,3 +602,35 @@
       await prisma.$disconnect();
       await pool.end();
     });
+=======
+  await prisma.pago_Cliente.upsert({
+    where: { codigo: 'PAG-0001' },
+    update: {},
+    create: {
+      codigo: 'PAG-0001',
+      medio_pago: 'efectivo',
+      monto: '52.86',
+      id_pedido: pedido.id,
+      created_at: now(),
+    },
+  });
+
+  console.log('✅ Seed demo completo (idempotente, re-ejecutable)');
+  console.log(
+    `   almacenes: ${almacenPrincipal.codigo}, ${almacenCocina.codigo} · pedido: PED-0001`,
+  );
+  console.log('   trabajadores seed (password: changeme123):');
+  console.log('     admin@turtle.pe · cocinero@turtle.pe');
+  console.log('     jefe@turtle.pe · mozo@turtle.pe');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Seed falló:', e);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+    await pool.end();
+  });
+>>>>>>> e65064dd09fcfb6ec1d0d3a2d4cce0fe003b01a0
