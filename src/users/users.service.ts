@@ -7,6 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { Prisma, Usuario } from '@prisma/client';
 import { CreateCustomerDto } from '@src/customers/dto/create-customer.dto';
+import { MailService } from '@src/mail/mail.service';
 import { PrismaService } from '@src/prisma/prisma.service';
 import { CreateWorkerDto } from '@src/workers/dto/create-worker.dto';
 import { randomBytes } from 'node:crypto';
@@ -19,6 +20,7 @@ export class UsersService {
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(ConfigService) private readonly config: ConfigService,
+    @Inject(MailService) private readonly mail: MailService,
   ) {}
 
   async createUsuarioTrabajador(dto: CreateWorkerDto) {
@@ -46,7 +48,15 @@ export class UsersService {
       include: { trabajador: true }, // Incluimos el trabajador en la respuesta
     });
 
-    return { user, plainPassword };
+    const emailSent = await this.mail.sendWorkerInvitation({
+      to: dto.email,
+      name: dto.name,
+      lastName: dto.lastName,
+      role: dto.role,
+      password: plainPassword,
+    });
+
+    return { user, plainPassword, emailSent };
   }
 
   async createUsuarioClienteDigital(dto: CreateCustomerDto) {
@@ -151,8 +161,16 @@ export class UsersService {
         ? {
             OR: [
               { email: { contains: search, mode: 'insensitive' } },
-              { trabajador: { nombre: { contains: search, mode: 'insensitive' } } },
-              { trabajador: { apellido: { contains: search, mode: 'insensitive' } } },
+              {
+                trabajador: {
+                  nombre: { contains: search, mode: 'insensitive' },
+                },
+              },
+              {
+                trabajador: {
+                  apellido: { contains: search, mode: 'insensitive' },
+                },
+              },
             ],
           }
         : {}),
@@ -166,7 +184,13 @@ export class UsersService {
         take: limit,
         include: {
           trabajador: {
-            select: { id: true, nombre: true, apellido: true, rol: true, activo: true },
+            select: {
+              id: true,
+              nombre: true,
+              apellido: true,
+              rol: true,
+              activo: true,
+            },
           },
           cliente: true,
         },
@@ -189,7 +213,13 @@ export class UsersService {
       where: { id, deleted_at: null },
       include: {
         trabajador: {
-          select: { id: true, nombre: true, apellido: true, rol: true, activo: true },
+          select: {
+            id: true,
+            nombre: true,
+            apellido: true,
+            rol: true,
+            activo: true,
+          },
         },
         cliente: true,
       },
@@ -222,7 +252,8 @@ export class UsersService {
         if (name) updateData.nombre = name;
         if (lastName) updateData.apellido = lastName;
         if (role) updateData.rol = role;
-        if (password) updateData.password_hash = await this.hashPassword(password);
+        if (password)
+          updateData.password_hash = await this.hashPassword(password);
 
         await tx.trabajador.update({
           where: { id },
@@ -241,7 +272,9 @@ export class UsersService {
     const user = await this.findById(id);
 
     if (!user.trabajador) {
-      throw new ConflictException('El usuario especificado no es un trabajador.');
+      throw new ConflictException(
+        'El usuario especificado no es un trabajador.',
+      );
     }
 
     const newStatus = !user.trabajador.activo;
@@ -251,7 +284,10 @@ export class UsersService {
       data: { activo: newStatus },
     });
 
-    return { id, activo: newStatus, message: `Estado del trabajador cambiado a: ${newStatus ? 'Activo' : 'Inactivo'}` };
+    return {
+      id,
+      activo: newStatus,
+      message: `Estado del trabajador cambiado a: ${newStatus ? 'Activo' : 'Inactivo'}`,
+    };
   }
-
 }
