@@ -1,29 +1,63 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
-import { platos_categoria } from '@prisma/client';
+import { ApiProperty, ApiPropertyOptional, ApiHideProperty } from '@nestjs/swagger';
+import { IsString, IsNumber, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+
+export class IngredientePlatoDto {
+  @ApiProperty({ description: 'ID del insumo', example: 1 })
+  @Type(() => Number)
+  @IsNumber()
+  insumo_id!: number;
+
+  @ApiProperty({ description: 'ID del almacén', example: 1 })
+  @Type(() => Number)
+  @IsNumber()
+  almacen_id!: number;
+
+  @ApiProperty({ description: 'Cantidad requerida (en la unidad base del insumo)', example: 0.250 })
+  @Type(() => Number)
+  @IsNumber()
+  cantidad!: number;
+}
 
 export class CreatePlatoDto {
-  @ApiProperty({ example: 'Lomo Saltado' })
+  @ApiProperty({ example: 'Ceviche' })
   @IsString()
-  @IsNotEmpty()
   nombre!: string;
 
-  @ApiProperty({ example: 'Lomo salteado al wok' })
-  @IsString()
-  @IsNotEmpty()
-  descripcion!: string;
-
-  @ApiProperty({ example: 38.50 })
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @IsPositive()
+  @ApiProperty({ example: 38 })
+  @Type(() => Number)
+  @IsNumber()
   precio!: number;
 
-  @ApiProperty({ enum: platos_categoria, example: platos_categoria.principal })
-  @IsEnum(platos_categoria)
-  categoria!: platos_categoria;
-
-  @ApiProperty({ example: 'PLT-001', required: false })
+  @ApiPropertyOptional({ example: 'Ceviche con pota' })
   @IsOptional()
   @IsString()
-  codigo?: string;
+  descripcion?: string;
+
+  @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Archivo de imagen del plato' })
+  @IsOptional()
+  imagen?: any;
+
+  @ApiPropertyOptional({
+    description: 'Arreglo de ingredientes para la receta',
+    example: '[{"insumo_id": 1, "almacen_id": 1, "cantidad": 0.25}]',
+  })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => IngredientePlatoDto)
+  ingredientes?: IngredientePlatoDto[];
+
+  @ApiHideProperty()
+  imagen_url?: string;
 }

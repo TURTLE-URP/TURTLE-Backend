@@ -1,53 +1,78 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards, Request, ParseIntPipe } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+  ParseIntPipe,
+  UseInterceptors,
+  UploadedFile,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { PlatosService } from './platos.service';
 import { CreatePlatoDto } from './dto/create-plato.dto';
 import { UpdatePlatoDto } from './dto/update-plato.dto';
-import { platos_categoria } from '@prisma/client';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { FilterPlatoDto } from './dto/filter-plato.dto';
+import { CloudinaryService } from '../integrations/cloudinary/cloudinary.service'; // Ajusta la ruta
 
-@ApiTags('Platillos')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiTags('Platos')
 @Controller('platos')
 export class PlatosController {
-  constructor(private readonly platosService: PlatosService) {}
+  constructor(
+    private readonly platosService: PlatosService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Post()
-@ApiOperation({ summary: 'Crear un nuevo platillo' })
-create(@Body() createPlatoDto: CreatePlatoDto, @Request() req) {
-  const userId = Number(req.user?.id || req.user?.sub || req.user?.id_usuario);
-  return this.platosService.create(createPlatoDto, userId);
-}
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('imagen'))
+  @ApiOperation({ summary: 'Crear un nuevo plato con receta' })
+  async create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createPlatoDto: CreatePlatoDto,
+  ) {
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'platos');
+      createPlatoDto.imagen_url = uploadResult.secureUrl;
+    }
+    return this.platosService.create(createPlatoDto);
+  }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos los platillos activos' })
-  @ApiQuery({ name: 'categoria', enum: platos_categoria, required: false })
-  findAll(@Query('categoria') categoria?: platos_categoria) {
-    return this.platosService.findAll(categoria);
+  @ApiOperation({ summary: 'Obtener listado de platos paginados y filtrados por nombre' })
+  findAll(@Query() filters: FilterPlatoDto) {
+    return this.platosService.findAll(filters);
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Obtener un platillo por ID' })
+  @ApiOperation({ summary: 'Obtener el detalle de un plato por ID con su receta' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.platosService.findOne(id);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Actualizar un platillo' })
-  update(
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('imagen'))
+  @ApiOperation({ summary: 'Actualizar un plato existente y reestructurar receta' })
+  async update(
     @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
     @Body() updatePlatoDto: UpdatePlatoDto,
-    @Request() req,
   ) {
-    const userId = req.user?.id || req.user?.sub || req.user?.id_usuario;
-    return this.platosService.update(id, updatePlatoDto, userId);
+    if (file) {
+      const uploadResult = await this.cloudinaryService.uploadImage(file, 'platos');
+      updatePlatoDto.imagen_url = uploadResult.secureUrl;
+    }
+    return this.platosService.update(id, updatePlatoDto);
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Eliminar un platillo (Soft Delete)' })
-  remove(@Param('id', ParseIntPipe) id: number, @Request() req) {
-    const userId = req.user?.id || req.user?.sub || req.user?.id_usuario;
-    return this.platosService.remove(id, userId);
+  @ApiOperation({ summary: 'Eliminar un plato por ID' })
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.platosService.remove(id);
   }
 }

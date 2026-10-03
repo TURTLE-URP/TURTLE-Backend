@@ -94,480 +94,478 @@ enum reporte_merma_estado {
 }
 
 model Pedido {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  IGV Decimal @db.Decimal(10, 2)
-  subtotal Decimal @db.Decimal(10, 2)
+  id                      Int         @id @default(autoincrement())
+  codigo                  String      @unique
+  IGV                     Decimal     @db.Decimal(10, 2)
+  subtotal                Decimal     @db.Decimal(10, 2)
   documento_cliente_local String?
-  nombre_cliente_local String?
-  tipo pedido_tipo
-  id_mesa Int?
-  id_cliente_digital Int?
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int?
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  nombre_cliente_local    String?
+  tipo                    pedido_tipo
+  id_mesa                 Int?
+  id_cliente_digital      Int?
+  created_at              DateTime    @default(now()) @db.Timestamp()
+  created_by              Int?
+  updated_at              DateTime?   @db.Timestamp()
+  updated_by              Int?
+  deleted_at              DateTime?   @db.Timestamp()
+  deleted_by              Int?
 
-  mesa Mesa? @relation(fields: [id_mesa], references: [id])
-  cliente Cliente_Digital? @relation(fields: [id_cliente_digital], references: [id])
-  pagos Pago_Cliente[]
+  mesa     Mesa?             @relation(fields: [id_mesa], references: [id])
+  cliente  Cliente_Digital?  @relation(fields: [id_cliente_digital], references: [id])
+  pagos    Pago_Cliente[]
   detalles Detalles_Pedido[]
   comandas Comanda[]
 }
 
 model Mesa {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  numero_mesa Int @db.SmallInt
-  capacidad Int @db.SmallInt
-  ocupado Boolean @default(false)
-  piso mesa_piso
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  id          Int       @id @default(autoincrement())
+  codigo      String    @unique
+  numero_mesa Int       @db.SmallInt
+  capacidad   Int       @db.SmallInt
+  ocupado     Boolean   @default(false)
+  piso        mesa_piso
+  created_at  DateTime  @default(now()) @db.Timestamp()
+  created_by  Int
+  updated_at  DateTime? @db.Timestamp()
+  updated_by  Int?
+  deleted_at  DateTime? @db.Timestamp()
+  deleted_by  Int?
 
   pedidos Pedido[]
 }
 
 model Pago_Cliente {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  medio_pago pago_medio_pago
-  monto Decimal @db.Decimal(10, 2)
-  url_comprobante String? @db.Text
-  id_pedido Int
-  created_at DateTime @default(now()) @db.Timestamp()
+  id              Int             @id @default(autoincrement())
+  codigo          String          @unique
+  medio_pago      pago_medio_pago
+  monto           Decimal         @db.Decimal(10, 2)
+  url_comprobante String?         @db.Text
+  id_pedido       Int
+  created_at      DateTime        @default(now()) @db.Timestamp()
 
-  pedido Pedido @relation(fields: [id_pedido], references: [id])
+  pedido   Pedido                  @relation(fields: [id_pedido], references: [id])
   detalles Detalles_Pago_Cliente[]
 }
 
 model Detalles_Pedido {
-  id Int @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   id_menu_item Int
-  cantidad Int @db.SmallInt
-  subtotal Decimal @db.Decimal(10, 2)
-  id_pedido Int
+  cantidad     Int     @db.SmallInt
+  subtotal     Decimal @db.Decimal(10, 2)
+  id_pedido    Int
 
-  pedido Pedido @relation(fields: [id_pedido], references: [id])
-  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+  pedido Pedido      @relation(fields: [id_pedido], references: [id])
+  plato  Platos_Menu @relation(fields: [id_menu_item], references: [id])
 }
 
 model Detalles_Pago_Cliente {
-  id Int @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   id_menu_item Int
-  cantidad Int @db.SmallInt
-  subtotal Decimal @db.Decimal(10, 2)
-  IGV Decimal @db.Decimal(10, 2)
-  id_pago Int
+  cantidad     Int     @db.SmallInt
+  subtotal     Decimal @db.Decimal(10, 2)
+  IGV          Decimal @db.Decimal(10, 2)
+  id_pago      Int
 
-  pago Pago_Cliente @relation(fields: [id_pago], references: [id])
-  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+  pago  Pago_Cliente @relation(fields: [id_pago], references: [id])
+  plato Platos_Menu  @relation(fields: [id_menu_item], references: [id])
 }
 
 model Platos_Menu {
-  id Int @id @default(autoincrement())
-  nombre String
+  id          Int              @id @default(autoincrement())
+  nombre      String
   descripcion String
-  precio Decimal @db.Decimal(10, 2)
-  categoria platos_categoria
-  codigo String?
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  precio      Decimal          @db.Decimal(10, 2)
+  categoria   platos_categoria
+  imagen_url  String?
+  codigo      String?
+  created_at  DateTime         @default(now()) @db.Timestamp()
+  created_by  Int
+  updated_at  DateTime?        @db.Timestamp()
+  updated_by  Int?
+  deleted_at  DateTime?        @db.Timestamp()
+  deleted_by  Int?
 
-  detalles_pedido Detalles_Pedido[]
-  detalles_pago Detalles_Pago_Cliente[]
+  detalles_pedido  Detalles_Pedido[]
+  detalles_pago    Detalles_Pago_Cliente[]
   detalles_comanda Detalles_Comanda[]
-  ingredientes Ingredientes_Plato[]
+  ingredientes     Ingredientes_Plato[]
 }
 
 model Comanda {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  listo Boolean @default(false)
-  fecha_hora_emision DateTime @default(now()) @db.Timestamp()
-  fecha_hora_listo DateTime? @db.Timestamp()
-  id_pedido Int
+  id                 Int       @id @default(autoincrement())
+  codigo             String    @unique
+  listo              Boolean   @default(false)
+  fecha_hora_emision DateTime  @default(now()) @db.Timestamp()
+  fecha_hora_listo   DateTime? @db.Timestamp()
+  id_pedido          Int
 
-  pedido Pedido @relation(fields: [id_pedido], references: [id])
-  detalles Detalles_Comanda[]
+  pedido              Pedido               @relation(fields: [id_pedido], references: [id])
+  detalles            Detalles_Comanda[]
   movimientos_almacen Movimiento_Almacen[]
 }
 
 model Detalles_Comanda {
-  id Int @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   id_menu_item Int
-  cantidad Int @db.SmallInt
-  notas String?
-  id_comanda Int
+  cantidad     Int     @db.SmallInt
+  notas        String?
+  id_comanda   Int
 
-  comanda Comanda @relation(fields: [id_comanda], references: [id])
-  plato Platos_Menu @relation(fields: [id_menu_item], references: [id])
+  comanda     Comanda              @relation(fields: [id_comanda], references: [id])
+  plato       Platos_Menu          @relation(fields: [id_menu_item], references: [id])
   movimientos Movimientos_Cocina[]
 }
 
 model Movimientos_Cocina {
-  id Int @id @default(autoincrement())
-  fecha_hora DateTime @default(now()) @db.Timestamp()
-  estado_platillo movimiento_estado
-  cantidad Int @db.SmallInt
+  id                 Int               @id @default(autoincrement())
+  fecha_hora         DateTime          @default(now()) @db.Timestamp()
+  estado_platillo    movimiento_estado
+  cantidad           Int               @db.SmallInt
   id_detalle_comanda Int
 
   detalle Detalles_Comanda @relation(fields: [id_detalle_comanda], references: [id])
 }
 
 model Ingredientes_Plato {
-  id Int @id @default(autoincrement())
-  id_insumo Int
-  id_medida_insumo Int
-  cantidad Decimal @db.Decimal
+  id                     Int     @id @default(autoincrement())
+  id_insumo              Int
+  cantidad               Decimal @db.Decimal
   id_almacen_sustraccion Int
-  id_plato Int
+  id_plato               Int
 
-  insumo Insumo @relation(fields: [id_insumo], references: [id])
-  medida Insumo_Medidas @relation(fields: [id_medida_insumo], references: [id])
-  almacen Almacen @relation(fields: [id_almacen_sustraccion], references: [id])
-  plato Platos_Menu @relation(fields: [id_plato], references: [id])
+  insumo  Insumo      @relation(fields: [id_insumo], references: [id])
+  almacen Almacen     @relation(fields: [id_almacen_sustraccion], references: [id])
+  plato   Platos_Menu @relation(fields: [id_plato], references: [id])
 }
 
 model Usuario {
-  id Int @id @default(autoincrement())
-  email String @unique
+  id           Int              @id @default(autoincrement())
+  email        String           @unique
   tipo_usuario usuario_tipo
-  created_at DateTime @default(now()) @db.Timestamp()
-  updated_at DateTime? @db.Timestamp()
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
-  trabajador Trabajador?
-  cliente Cliente_Digital?
+  created_at   DateTime         @default(now()) @db.Timestamp()
+  updated_at   DateTime?        @db.Timestamp()
+  deleted_at   DateTime?        @db.Timestamp()
+  deleted_by   Int?
+  trabajador   Trabajador?
+  cliente      Cliente_Digital?
 }
 
 model Trabajador {
-  id Int @id
-  nombre String
-  apellido String
+  id            Int            @id
+  nombre        String
+  apellido      String
   password_hash String
-  rol trabajador_rol
-  activo Boolean @default(false)
+  rol           trabajador_rol
+  activo        Boolean        @default(false)
 
   usuario Usuario @relation(fields: [id], references: [id])
 }
 
 model Cliente_Digital {
-  id Int @id
-  nombre_completo String
-  auth_provider cliente_auth_provider
-  provider_user_id String @unique
+  id               Int                   @id
+  nombre_completo  String
+  auth_provider    cliente_auth_provider
+  provider_user_id String                @unique
 
-  usuario Usuario @relation(fields: [id], references: [id])
+  usuario Usuario  @relation(fields: [id], references: [id])
   pedidos Pedido[]
 }
 
 model Auditoria_Sistema {
-  id BigInt @id @default(autoincrement()) @db.BigInt
-  id_usuario Int
-  accion auditoria_accion
+  id             BigInt           @id @default(autoincrement()) @db.BigInt
+  id_usuario     Int
+  accion         auditoria_accion
   tabla_afectada String
-  row_id String
-  direccion_ip String
-  user_agent String @db.Text
-  fecha_hora DateTime @default(now()) @db.Timestamp()
+  row_id         String
+  direccion_ip   String
+  user_agent     String           @db.Text
+  fecha_hora     DateTime         @default(now()) @db.Timestamp()
 }
 
 model Productos_Proveedor {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  nombre String
-  descripcion String?
-  SKU String?
-  id_insumo Int
-  id_insumo_medida Int
-  factor_conversion Decimal @db.Decimal
-  id_proveedor Int
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  precio_referencial Decimal? @db.Decimal(10, 2)
+  id                 Int       @id @default(autoincrement())
+  codigo             String    @unique
+  nombre             String
+  descripcion        String?
+  SKU                String?
+  id_insumo          Int
+  id_insumo_medida   Int
+  factor_conversion  Decimal   @db.Decimal
+  id_proveedor       Int
+  created_at         DateTime  @default(now()) @db.Timestamp()
+  created_by         Int
+  updated_at         DateTime? @db.Timestamp()
+  updated_by         Int?
+  precio_referencial Decimal?  @db.Decimal(10, 2)
 
-  insumo Insumo @relation(fields: [id_insumo], references: [id])
-  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
-  proveedor Proveedor @relation(fields: [id_proveedor], references: [id])
-  detalles_orden Detalles_Orden_Abasto[]
+  insumo          Insumo                   @relation(fields: [id_insumo], references: [id])
+  medida          Insumo_Medidas           @relation(fields: [id_insumo_medida], references: [id])
+  proveedor       Proveedor                @relation(fields: [id_proveedor], references: [id])
+  detalles_orden  Detalles_Orden_Abasto[]
   detalles_arribo Detalles_Arribo_Abasto[]
 }
 
 model Insumo {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  nombre String
-  descripcion String?
+  id             Int       @id @default(autoincrement())
+  codigo         String    @unique
+  nombre         String
+  descripcion    String?
   id_unidad_base Int
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  created_at     DateTime  @default(now()) @db.Timestamp()
+  created_by     Int
+  updated_at     DateTime? @db.Timestamp()
+  updated_by     Int?
+  deleted_at     DateTime? @db.Timestamp()
+  deleted_by     Int?
 
-  unidad_base Unidad_Medida @relation(fields: [id_unidad_base], references: [id])
-  medidas Insumo_Medidas[]
-  ingredientes Ingredientes_Plato[]
-  productos Productos_Proveedor[]
+  unidad_base           Unidad_Medida                  @relation(fields: [id_unidad_base], references: [id])
+  medidas               Insumo_Medidas[]
+  ingredientes          Ingredientes_Plato[]
+  productos             Productos_Proveedor[]
   detalles_distribucion Detalles_Distribucion_Abasto[]
-  stocks Stock_Almacen[]
+  stocks                Stock_Almacen[]
 }
 
 model Almacen {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  nombre String
-  ubicacion String
+  id          Int       @id @default(autoincrement())
+  codigo      String    @unique
+  nombre      String
+  ubicacion   String
   descripcion String
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  created_at  DateTime  @default(now()) @db.Timestamp()
+  created_by  Int
+  updated_at  DateTime? @db.Timestamp()
+  updated_by  Int?
+  deleted_at  DateTime? @db.Timestamp()
+  deleted_by  Int?
 
-  ingredientes Ingredientes_Plato[]
+  ingredientes          Ingredientes_Plato[]
   detalles_distribucion Detalles_Distribucion_Abasto[]
-  stocks Stock_Almacen[]
+  stocks                Stock_Almacen[]
 }
 
 model Proveedor {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  ruc String @unique
+  id           Int       @id @default(autoincrement())
+  codigo       String    @unique
+  ruc          String    @unique
   razon_social String
-  estado String
-  condicion String
-  direccion String
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  estado       String
+  condicion    String
+  direccion    String
+  created_at   DateTime  @default(now()) @db.Timestamp()
+  created_by   Int
+  updated_at   DateTime? @db.Timestamp()
+  updated_by   Int?
+  deleted_at   DateTime? @db.Timestamp()
+  deleted_by   Int?
 
   contactos Proveedor_Contacto[]
-  ordenes Orden_Abasto[]
+  ordenes   Orden_Abasto[]
   productos Productos_Proveedor[]
 }
 
 model Proveedor_Contacto {
-  id Int @id @default(autoincrement())
-  id_proveedor Int
+  id              Int                     @id @default(autoincrement())
+  id_proveedor    Int
   nombre_contacto String
-  tipo proveedor_contacto_tipo
-  contacto String
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
-  deleted_at DateTime? @db.Timestamp()
-  deleted_by Int?
+  tipo            proveedor_contacto_tipo
+  contacto        String
+  created_at      DateTime                @default(now()) @db.Timestamp()
+  created_by      Int
+  updated_at      DateTime?               @db.Timestamp()
+  updated_by      Int?
+  deleted_at      DateTime?               @db.Timestamp()
+  deleted_by      Int?
 
   proveedor Proveedor @relation(fields: [id_proveedor], references: [id])
 }
 
 model Unidad_Medida {
-  id Int @id @default(autoincrement())
-  factor_canonico Decimal @db.Decimal
-  nombre String
-  abreviatura String
-  tipo unidad_tipo
+  id              Int         @id @default(autoincrement())
+  factor_canonico Decimal     @db.Decimal
+  nombre          String
+  abreviatura     String
+  tipo            unidad_tipo
 
   insumos Insumo[]
 }
 
 model Insumo_Medidas {
-  id Int @id @default(autoincrement())
-  nombre String
-  abreviatura String
+  id            Int     @id @default(autoincrement())
+  nombre        String
+  abreviatura   String
   factor_a_base Decimal @db.Decimal
-  id_insumo Int
+  id_insumo     Int
 
-  insumo Insumo @relation(fields: [id_insumo], references: [id])
-  ingredientes Ingredientes_Plato[]
-  productos Productos_Proveedor[]
+  insumo                Insumo                         @relation(fields: [id_insumo], references: [id])
+  productos             Productos_Proveedor[]
   detalles_distribucion Detalles_Distribucion_Abasto[]
-  movimientos Movimiento_Almacen[]
-  mermas Merma_Insumo[]
+  movimientos           Movimiento_Almacen[]
+  mermas                Merma_Insumo[]
 }
 
 model Orden_Abasto {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  estado orden_estado @default(emitida)
-  emitida_a Int
-  fecha_hora_emision DateTime @default(now()) @db.Timestamp()
-  emitida_por Int
-  fecha_hora_cancelacion DateTime? @db.Timestamp()
-  cancelada_por Int?
-  motivo_cancelacion String? @db.Text
-  id_factura Int?
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
-  updated_at DateTime? @db.Timestamp()
-  updated_by Int?
+  id                     Int          @id @default(autoincrement())
+  codigo                 String       @unique
+  estado                 orden_estado @default(emitida)
+  emitida_a              Int
+  fecha_hora_emision     DateTime     @default(now()) @db.Timestamp()
+  emitida_por            Int
+  fecha_hora_cancelacion DateTime?    @db.Timestamp()
+  cancelada_por          Int?
+  motivo_cancelacion     String?      @db.Text
+  id_factura             Int?
+  created_at             DateTime     @default(now()) @db.Timestamp()
+  created_by             Int
+  updated_at             DateTime?    @db.Timestamp()
+  updated_by             Int?
 
-  proveedor Proveedor @relation(fields: [emitida_a], references: [id])
-  factura Factura? @relation(fields: [id_factura], references: [id])
-  detalles Detalles_Orden_Abasto[]
-  arribos Arribo_Abasto[]
+  proveedor Proveedor               @relation(fields: [emitida_a], references: [id])
+  factura   Factura?                @relation(fields: [id_factura], references: [id])
+  detalles  Detalles_Orden_Abasto[]
+  arribos   Arribo_Abasto[]
 }
 
 model Detalles_Orden_Abasto {
-  id Int @id @default(autoincrement())
-  cantidad Int @db.SmallInt
+  id                    Int @id @default(autoincrement())
+  cantidad              Int @db.SmallInt
   id_producto_proveedor Int
-  id_orden_abasto Int
+  id_orden_abasto       Int
 
   producto Productos_Proveedor @relation(fields: [id_producto_proveedor], references: [id])
-  orden Orden_Abasto @relation(fields: [id_orden_abasto], references: [id])
+  orden    Orden_Abasto        @relation(fields: [id_orden_abasto], references: [id])
 }
 
 model Arribo_Abasto {
-  id Int @id @default(autoincrement())
-  codigo String @unique
-  url_acta_conformidad String @db.Text
-  recibido_por Int
+  id                   Int      @id @default(autoincrement())
+  codigo               String   @unique
+  url_acta_conformidad String   @db.Text
+  recibido_por         Int
   fecha_hora_recepcion DateTime @default(now()) @db.Timestamp()
-  id_orden_abasto Int
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
+  id_orden_abasto      Int
+  created_at           DateTime @default(now()) @db.Timestamp()
+  created_by           Int
 
-  orden Orden_Abasto @relation(fields: [id_orden_abasto], references: [id])
-  detalles Detalles_Arribo_Abasto[]
+  orden          Orden_Abasto             @relation(fields: [id_orden_abasto], references: [id])
+  detalles       Detalles_Arribo_Abasto[]
   distribuciones Distribucion_Abasto[]
 }
 
 model Detalles_Arribo_Abasto {
-  id Int @id @default(autoincrement())
-  cantidad Int @db.SmallInt
+  id                    Int @id @default(autoincrement())
+  cantidad              Int @db.SmallInt
   id_producto_proveedor Int
-  id_arribo_abasto Int
+  id_arribo_abasto      Int
 
   producto Productos_Proveedor @relation(fields: [id_producto_proveedor], references: [id])
-  arribo Arribo_Abasto @relation(fields: [id_arribo_abasto], references: [id])
+  arribo   Arribo_Abasto       @relation(fields: [id_arribo_abasto], references: [id])
 }
 
 model Factura {
-  id Int @id @default(autoincrement())
-  url_factura_xml String @db.Text
+  id              Int     @id @default(autoincrement())
+  url_factura_xml String  @db.Text
   url_factura_pdf String? @db.Text
 
   ordenes Orden_Abasto[]
-  pagos Pagos_Factura[]
+  pagos   Pagos_Factura[]
 }
 
 model Pagos_Factura {
-  id Int @id @default(autoincrement())
-  monto Decimal @db.Decimal(10, 2)
-  url_comprobante String? @db.Text
-  id_factura Int
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int
+  id              Int      @id @default(autoincrement())
+  monto           Decimal  @db.Decimal(10, 2)
+  url_comprobante String?  @db.Text
+  id_factura      Int
+  created_at      DateTime @default(now()) @db.Timestamp()
+  created_by      Int
 
   factura Factura @relation(fields: [id_factura], references: [id])
 }
 
 model Distribucion_Abasto {
-  id Int @id @default(autoincrement())
-  codigo String @unique
+  id                      Int      @id @default(autoincrement())
+  codigo                  String   @unique
   fecha_hora_distribucion DateTime @default(now()) @db.Timestamp()
-  created_at DateTime @default(now()) @db.Timestamp()
-  id_arribo_abasto Int
+  created_at              DateTime @default(now()) @db.Timestamp()
+  id_arribo_abasto        Int
 
-  arribo Arribo_Abasto @relation(fields: [id_arribo_abasto], references: [id])
+  arribo   Arribo_Abasto                  @relation(fields: [id_arribo_abasto], references: [id])
   detalles Detalles_Distribucion_Abasto[]
 }
 
 model Detalles_Distribucion_Abasto {
-  id Int @id @default(autoincrement())
-  id_insumo Int
-  id_insumo_medida Int
-  cantidad Decimal? @db.Decimal
-  id_almacen Int
+  id                     Int      @id @default(autoincrement())
+  id_insumo              Int
+  id_insumo_medida       Int
+  cantidad               Decimal? @db.Decimal
+  id_almacen             Int
   id_distribucion_abasto Int
 
-  insumo Insumo @relation(fields: [id_insumo], references: [id])
-  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
-  almacen Almacen @relation(fields: [id_almacen], references: [id])
+  insumo       Insumo              @relation(fields: [id_insumo], references: [id])
+  medida       Insumo_Medidas      @relation(fields: [id_insumo_medida], references: [id])
+  almacen      Almacen             @relation(fields: [id_almacen], references: [id])
   distribucion Distribucion_Abasto @relation(fields: [id_distribucion_abasto], references: [id])
-  movimiento Movimiento_Almacen?
+  movimiento   Movimiento_Almacen?
 }
 
 model Stock_Almacen {
-  id Int @id @default(autoincrement())
-  id_almacen Int
-  id_insumo Int
-  stock_actual Decimal @db.Decimal
-  stock_min Decimal @db.Decimal
-  stock_ideal Decimal @db.Decimal
-  updated_at DateTime @db.Timestamp()
+  id           Int      @id @default(autoincrement())
+  id_almacen   Int
+  id_insumo    Int
+  stock_actual Decimal  @db.Decimal
+  stock_min    Decimal  @db.Decimal
+  stock_ideal  Decimal  @db.Decimal
+  updated_at   DateTime @db.Timestamp()
 
-  almacen Almacen @relation(fields: [id_almacen], references: [id])
-  insumo Insumo @relation(fields: [id_insumo], references: [id])
+  almacen     Almacen              @relation(fields: [id_almacen], references: [id])
+  insumo      Insumo               @relation(fields: [id_insumo], references: [id])
   movimientos Movimiento_Almacen[]
-  mermas Merma_Insumo[]
+  mermas      Merma_Insumo[]
 
   @@unique([id_almacen, id_insumo])
 }
 
 model Movimiento_Almacen {
-  id Int @id @default(autoincrement())
-  id_stock_almacen Int
-  tipo movimiento_almacen_tipo
-  cantidad Decimal @db.Decimal
-  saldo_anterior Decimal @db.Decimal
-  saldo_nuevo Decimal @db.Decimal
-  id_insumo_medida Int
-  id_detalle_distribucion Int? @unique
-  id_comanda Int?
-  id_merma Int? @unique
-  created_at DateTime @default(now()) @db.Timestamp()
-  created_by Int?
+  id                      Int                     @id @default(autoincrement())
+  id_stock_almacen        Int
+  tipo                    movimiento_almacen_tipo
+  cantidad                Decimal                 @db.Decimal
+  saldo_anterior          Decimal                 @db.Decimal
+  saldo_nuevo             Decimal                 @db.Decimal
+  id_insumo_medida        Int
+  id_detalle_distribucion Int?                    @unique
+  id_comanda              Int?
+  id_merma                Int?                    @unique
+  created_at              DateTime                @default(now()) @db.Timestamp()
+  created_by              Int?
 
-  stock Stock_Almacen @relation(fields: [id_stock_almacen], references: [id])
-  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  stock                Stock_Almacen                 @relation(fields: [id_stock_almacen], references: [id])
+  medida               Insumo_Medidas                @relation(fields: [id_insumo_medida], references: [id])
   detalle_distribucion Detalles_Distribucion_Abasto? @relation(fields: [id_detalle_distribucion], references: [id])
-  comanda Comanda? @relation(fields: [id_comanda], references: [id])
-  merma Merma_Insumo? @relation(fields: [id_merma], references: [id])
+  comanda              Comanda?                      @relation(fields: [id_comanda], references: [id])
+  merma                Merma_Insumo?                 @relation(fields: [id_merma], references: [id])
 }
 
 model Merma_Insumo {
-  id Int @id @default(autoincrement())
+  id               Int                  @id @default(autoincrement())
   id_stock_almacen Int
-  cantidad Decimal @db.Decimal
+  cantidad         Decimal              @db.Decimal
   id_insumo_medida Int
-  descripcion String
-  reportado_por Int
-  revisado_por Int?
-  estado reporte_merma_estado
-  created_at DateTime @default(now()) @db.Timestamp()
+  descripcion      String
+  reportado_por    Int
+  revisado_por     Int?
+  estado           reporte_merma_estado
+  created_at       DateTime             @default(now()) @db.Timestamp()
 
-  stock Stock_Almacen @relation(fields: [id_stock_almacen], references: [id])
-  medida Insumo_Medidas @relation(fields: [id_insumo_medida], references: [id])
+  stock      Stock_Almacen       @relation(fields: [id_stock_almacen], references: [id])
+  medida     Insumo_Medidas      @relation(fields: [id_insumo_medida], references: [id])
   movimiento Movimiento_Almacen?
   evidencias Evidencia_Merma[]
 }
 
 model Evidencia_Merma {
-  id Int @id @default(autoincrement())
+  id            Int    @id @default(autoincrement())
   url_evidencia String @db.Text
-  id_merma Int
+  id_merma      Int
 
   merma Merma_Insumo @relation(fields: [id_merma], references: [id])
 }

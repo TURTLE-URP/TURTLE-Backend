@@ -306,7 +306,6 @@ async function main() {
       data: {
         id_plato: platoId,
         id_insumo: insumoId,
-        id_medida_insumo: medidaId,
         cantidad,
         id_almacen_sustraccion: almacenId,
       },
