@@ -18,9 +18,11 @@ import { CreatePlatoDto } from './dto/create-plato.dto';
 import { UpdatePlatoDto } from './dto/update-plato.dto';
 import { FilterPlatoDto } from './dto/filter-plato.dto';
 import { CloudinaryService } from '../integrations/cloudinary/cloudinary.service'; // Ajusta la ruta
+import { Public } from '../auth/decorators/public.decorator';
 
 @ApiTags('Platos')
 @Controller('platos')
+@Public()
 export class PlatosController {
   constructor(
     private readonly platosService: PlatosService,
@@ -46,6 +48,12 @@ export class PlatosController {
   @ApiOperation({ summary: 'Obtener listado de platos paginados y filtrados por nombre' })
   findAll(@Query() filters: FilterPlatoDto) {
     return this.platosService.findAll(filters);
+  }
+
+  @Get('insumos/para-receta')
+  @ApiOperation({ summary: 'Obtener listado de insumos disponibles para preparar recetas' })
+  findInsumosParaReceta() {
+    return this.platosService.findInsumosParaReceta();
   }
 
   @Get(':id')

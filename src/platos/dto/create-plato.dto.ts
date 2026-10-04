@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional, ApiHideProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, ValidateNested, IsIn } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+
+const CATEGORIAS = ['postre', 'entrada', 'principal', 'refresco'] as const;
 
 export class IngredientePlatoDto {
   @ApiProperty({ description: 'ID del insumo', example: 1 })
@@ -34,6 +36,11 @@ export class CreatePlatoDto {
   @IsString()
   descripcion?: string;
 
+  @ApiPropertyOptional({ description: 'Categoría del plato', enum: CATEGORIAS, example: 'principal' })
+  @IsOptional()
+  @IsIn(CATEGORIAS)
+  categoria?: typeof CATEGORIAS[number];
+
   @ApiPropertyOptional({ type: 'string', format: 'binary', description: 'Archivo de imagen del plato' })
   @IsOptional()
   imagen?: any;
@@ -58,6 +65,8 @@ export class CreatePlatoDto {
   @Type(() => IngredientePlatoDto)
   ingredientes?: IngredientePlatoDto[];
 
-  @ApiHideProperty()
+  @ApiPropertyOptional({ description: 'URL de la imagen en Cloudinary' })
+  @IsOptional()
+  @IsString()
   imagen_url?: string;
 }
